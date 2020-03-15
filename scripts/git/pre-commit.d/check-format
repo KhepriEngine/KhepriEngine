@@ -1,0 +1,26 @@
+#!/bin/bash
+# Checks formatting of all changed files and aborts commit if some are not properly formatted
+
+CLANG_FORMAT=clang-format
+
+# Redirect output to stderr.
+exec 1>&2
+
+WRONG_FILES=()
+FILES=$(git diff-index --cached --name-only HEAD | grep -iE "\.(cpp|cc|c|h|hpp)$")
+for file in $FILES; do
+    if [ -f $file ]; then
+        $CLANG_FORMAT -Werror --dry-run ${file} >/dev/null 2>&1
+        if [ ! $? -eq 0 ]; then
+            WRONG_FILES+=($file)
+        fi
+    fi
+done
+
+if [ ! ${#WRONG_FILES[@]} -eq 0 ]; then
+    echo "error: the following files have incorrect formatting:"
+    for i in "${WRONG_FILES[@]}"; do
+        echo "  $i"
+    done
+    exit 1
+fi
