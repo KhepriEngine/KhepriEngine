@@ -1,8 +1,11 @@
 PROJECT_NAME = Khepri
 
 # Only generate documentation for the public headers
-INPUT =
+INPUT = include
 RECURSIVE = YES
+
+# Ignore types in 'detail' namespaces, they are not relevant
+EXCLUDE_SYMBOLS = *::detail::*
 
 GENERATE_HTML = YES
 GENERATE_LATEX = NO

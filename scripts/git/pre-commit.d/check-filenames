@@ -1,12 +1,8 @@
 #!/bin/sh
 # Checks filenames of the committed files to ensure portability
 
-SCRIPT_DIR=$(dirname $(realpath "$0"))
-GIT_REPO=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)
-
 # Redirect output to stderr.
 exec 1>&2
-cd $GIT_REPO
 
 if git rev-parse --verify HEAD >/dev/null 2>&1
 then
