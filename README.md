@@ -7,11 +7,12 @@ Khepri is a C++ game engine library.
 Khepri requires:
 
 * a C++17-capable compiler
-* [CMake](https://cmake.org/) 3.12 or newer.
-* [Git](https://git-scm.com/) 1.7 or newer.
+* [Conan](https://conan.io/) 1.46 or newer.
+* [CMake](https://cmake.org/) 3.13 or newer.
 * [Doxygen](https://www.doxygen.nl/).
 * [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) 10.
 * [ClangTidy](https://clang.llvm.org/extra/clang-tidy/) 10.
+* [Vulkan SDK 1.2](https://vulkan.lunarg.com/sdk/home) or later.
 
 ## Getting Started
 
@@ -19,10 +20,11 @@ Make sure that the requirements mentioned above are installed.
 
 ## Building
 
+Building uses Conan to automatically install all required dependencies:
 ```
 mkdir build && cd build
-cmake ..
-cmake --build .
+conan install ..
+conan build ..
 ```
 
 ## Contributing
