@@ -9,6 +9,7 @@ Khepri requires:
 * a C++17-capable compiler
 * [CMake](https://cmake.org/) 3.12 or newer.
 * [Git](https://git-scm.com/) 1.7 or newer.
+* [Doxygen](https://www.doxygen.nl/).
 * [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) 10.
 
 ## Getting Started
