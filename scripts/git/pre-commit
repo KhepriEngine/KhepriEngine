@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Run all pre-commit hooks
+for hook in $(dirname "$0")/pre-commit.d/*; do
+    bash $hook
+    RESULT=$?
+    if [ $RESULT != 0 ]; then
+        echo "$hook returned $RESULT, aborting commit"
+        exit $RESULT
+    fi
+done
