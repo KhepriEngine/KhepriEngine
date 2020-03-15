@@ -1,0 +1,10 @@
+#!/bin/bash
+# Checks documentation of all files in the repository and
+# aborts commit if some are not properly formatted.
+
+DOXYGEN=doxygen
+
+GIT_REPO=$(git rev-parse --show-toplevel)
+
+# Redirect output to stderr.
+$GIT_REPO/scripts/check-documentation.sh 1>&2

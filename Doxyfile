@@ -1,0 +1,13 @@
+PROJECT_NAME = Khepri
+
+# Only generate documentation for the public headers
+INPUT =
+RECURSIVE = YES
+
+GENERATE_HTML = YES
+GENERATE_LATEX = NO
+
+EXTRACT_ALL = NO
+EXTRACT_STATIC = YES
+WARNINGS = YES
+WARN_IF_UNDOCUMENTED = YES
