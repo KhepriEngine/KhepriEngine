@@ -42,12 +42,27 @@ class KhepriEngineConan(ConanFile):
         ("vulkan-headers/[>=1.3]"),
     ]
 
-    exports_sources = "CMakeLists.txt", "include/*", "src/*"
+    build_requires = [
+        ("gtest/[>=1.0 <2.0]"),
+    ]
+
+    exports_sources = "CMakeLists.txt", "include/*", "src/*", "tests/*"
 
     def build(self):
         cmake = CMake(self)
+
+        # Propagate version info into CMake
+        version_info = self._parse_version(self.version)
+        if version_info:
+            cmake.definitions['KHEPRI_VERSION_MAJOR'] = version_info['major']
+            cmake.definitions['KHEPRI_VERSION_MINOR'] = version_info['minor']
+            cmake.definitions['KHEPRI_VERSION_PATCH'] = version_info['patch']
+            cmake.definitions['KHEPRI_VERSION_COMMIT'] = version_info['commit']
+            cmake.definitions['KHEPRI_VERSION_CLEAN'] = str(version_info['clean']).lower()
+
         cmake.configure()
         cmake.build()
+        cmake.test()
 
     def package(self):
         cmake = CMake(self)
@@ -55,3 +70,15 @@ class KhepriEngineConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["Khepri"]
+
+    @staticmethod
+    def _parse_version(version):
+        result = re.match(r"(\d+).(\d+).(\d+)\+([a-fA-F0-9]+)(\.dirty)?", version)
+        if result:
+            return {
+                'major': int(result.group(1)),
+                'minor': int(result.group(2)),
+                'patch': int(result.group(3)),
+                'commit': result.group(4),
+                'clean': (result.group(5) is None)
+            }
