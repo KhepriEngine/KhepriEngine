@@ -14,6 +14,8 @@ add_library(${PROJECT_NAME}
     src/application/application.cpp
     src/application/console_logger.cpp
     src/application/window.cpp
+    src/io/file.cpp
+    src/io/stream.cpp
     src/log/log.cpp
     src/math/matrix.cpp
     src/math/quaternion.cpp
@@ -48,6 +50,13 @@ target_link_libraries(${PROJECT_NAME}
     gsl::gsl-lite
     Vulkan::Vulkan
 )
+
+if(MSVC)
+  target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+      _CRT_SECURE_NO_WARNINGS
+  )
+endif()
 
 export(TARGETS ${PROJECT_NAME} NAMESPACE Khepri:: FILE KhepriTargets.cmake)
 
