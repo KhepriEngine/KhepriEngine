@@ -11,7 +11,7 @@ class Vector3;
 class Vector4;
 
 /// \brief A 2-component vector
-#pragma pack(push, 0)
+#pragma pack(push, 1)
 class Vector2 final
 {
 public:

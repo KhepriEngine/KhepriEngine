@@ -12,7 +12,7 @@ namespace khepri {
 class matrix;
 
 /// \brief A 4-component vector
-#pragma pack(push, 0)
+#pragma pack(push, 1)
 class Vector4 final
 {
 public:
@@ -153,7 +153,7 @@ public:
     }
 
     /// Normalizes the vector
-    constexpr void normalize() noexcept
+    void normalize() noexcept
     {
         const component_type inv_length = 1.0F / length();
         x *= inv_length;
@@ -219,7 +219,7 @@ inline constexpr Vector4 operator*(const Vector4& v1, const Vector4& v2) noexcep
 }
 
 /// Calculates the distance between the points identified by vector \a v1 and vector \a v2
-inline constexpr float distance(const Vector4& v1, const Vector4& v2) noexcept
+inline float distance(const Vector4& v1, const Vector4& v2) noexcept
 {
     return v1.distance(v2);
 }

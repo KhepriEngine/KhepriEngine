@@ -14,7 +14,7 @@ Quaternion operator*(const Quaternion& q1, const Quaternion& q2) noexcept;
 /**
  * \brief Quaternion
  */
-#pragma pack(push, 0)
+#pragma pack(push, 1)
 class Quaternion final
 {
 public:

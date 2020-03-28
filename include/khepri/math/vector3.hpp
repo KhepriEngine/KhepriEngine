@@ -14,7 +14,7 @@ class Vector4;
 /**
  * \brief A 3-component vector
  */
-#pragma pack(push, 0)
+#pragma pack(push, 1)
 class Vector3 final
 {
 public:
