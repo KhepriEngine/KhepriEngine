@@ -1,5 +1,4 @@
-#ifndef KHEPRI_MATH_SIZE_HPP
-#define KHEPRI_MATH_SIZE_HPP
+#pragma once
 
 namespace khepri {
 
@@ -15,6 +14,4 @@ struct Size
     unsigned long height;
 };
 
-}; // namespace khepri
-
-#endif
+} // namespace khepri

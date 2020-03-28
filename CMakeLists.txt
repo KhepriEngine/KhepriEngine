@@ -15,6 +15,8 @@ add_library(${PROJECT_NAME}
     src/application/console_logger.cpp
     src/application/window.cpp
     src/log/log.cpp
+    src/math/matrix.cpp
+    src/math/quaternion.cpp
     src/renderer/vulkan/renderer.cpp
     src/renderer/vulkan/render.cpp
     src/version_info.cpp
