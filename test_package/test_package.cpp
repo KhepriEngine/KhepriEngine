@@ -1,4 +1,7 @@
 #include <khepri/application/application.hpp>
+#include <khepri/version.hpp>
+
+#include <iostream>
 
 class TestApplication : khepri::application::Application
 {
@@ -12,5 +15,6 @@ protected:
 int main()
 {
     TestApplication application;
+    std::cout << "Khepri version: " << khepri::to_string(khepri::version()) << std::endl;
     return 0;
 }

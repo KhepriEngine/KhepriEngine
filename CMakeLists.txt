@@ -17,6 +17,20 @@ add_library(${PROJECT_NAME}
     src/log/log.cpp
     src/renderer/vulkan/renderer.cpp
     src/renderer/vulkan/render.cpp
+    src/version_info.cpp
+    src/version.cpp
+)
+
+set_property(
+  SOURCE src/version.cpp
+  APPEND
+  PROPERTY COMPILE_DEFINITIONS
+  KHEPRI_VERSION_MAJOR=${KHEPRI_VERSION_MAJOR}
+  KHEPRI_VERSION_MINOR=${KHEPRI_VERSION_MINOR}
+  KHEPRI_VERSION_PATCH=${KHEPRI_VERSION_PATCH}
+  KHEPRI_VERSION_STRING="${KHEPRI_VERSION_MAJOR}.${KHEPRI_VERSION_MINOR}.${KHEPRI_VERSION_PATCH}"
+  KHEPRI_VERSION_COMMIT="${KHEPRI_VERSION_COMMIT}"
+  KHEPRI_VERSION_CLEAN=${KHEPRI_VERSION_CLEAN}
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -38,3 +52,25 @@ export(TARGETS ${PROJECT_NAME} NAMESPACE Khepri:: FILE KhepriTargets.cmake)
 install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME})
 install(DIRECTORY include/khepri DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT ${PROJECT_NAME} DESTINATION lib)
+
+#
+# Tests
+#
+include(CTest)
+if (BUILD_TESTING)
+    find_package(GTest REQUIRED)
+
+    include(GoogleTest)
+
+    add_executable(${PROJECT_NAME}Tests
+        tests/version_test.cpp
+    )
+
+    target_link_Libraries(${PROJECT_NAME}Tests
+        PRIVATE
+            ${PROJECT_NAME}
+            GTest::gtest_main
+    )
+
+    gtest_discover_tests(${PROJECT_NAME}Tests)
+endif()
