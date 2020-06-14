@@ -36,6 +36,8 @@ class KhepriEngineConan(ConanFile):
     generators = "cmake_find_package"
 
     requires = [
+        ("assimp/[>=5.0 <6.0]"),
+        ("cxxopts/[>=2.0 <3.0]"),
         ("fmt/[>=6.0 <7.0]"),
         ("glfw/[>=3.0 <4.0]"),
         ("gsl-lite/0.36.0"),
@@ -46,7 +48,7 @@ class KhepriEngineConan(ConanFile):
         ("gtest/[>=1.0 <2.0]"),
     ]
 
-    exports_sources = "CMakeLists.txt", "include/*", "src/*", "tests/*"
+    exports_sources = "CMakeLists.txt", "cmake/*", "include/*", "src/*", "tests/*", "tools/*"
 
     def build(self):
         cmake = CMake(self)
