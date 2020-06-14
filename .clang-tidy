@@ -1,5 +1,5 @@
 ---
-Checks:              '-*,bugprone-*,cert-*,clang-analyzer-*,concurrency-*,cppcoreguidelines-*,misc-*,modernize-*,performance-*,portability-*,readability-*,-modernize-use-trailing-return-type'
+Checks:              '-*,bugprone-*,cert-*,clang-analyzer-*,concurrency-*,cppcoreguidelines-*,misc-*,modernize-*,performance-*,portability-*,readability-*,-misc-no-recursion,-modernize-use-trailing-return-type'
 HeaderFilterRegex:   'khepri/'
 
 CheckOptions:
@@ -11,3 +11,4 @@ CheckOptions:
     - { key: readability-identifier-naming.PrivateMemberPrefix, value: m_ }
     - { key: readability-identifier-naming.GlobalConstantCase, value: UPPER_CASE }
     - { key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic, value: true }
+

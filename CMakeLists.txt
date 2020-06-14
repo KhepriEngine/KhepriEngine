@@ -14,11 +14,14 @@ add_library(${PROJECT_NAME}
     src/application/application.cpp
     src/application/console_logger.cpp
     src/application/window.cpp
+    src/io/container_stream.cpp
     src/io/file.cpp
     src/io/stream.cpp
     src/log/log.cpp
     src/math/matrix.cpp
     src/math/quaternion.cpp
+    src/renderer/io/kmf.cpp
+    src/renderer/model.cpp
     src/renderer/vulkan/renderer.cpp
     src/renderer/vulkan/render.cpp
     src/version_info.cpp
@@ -63,6 +66,8 @@ export(TARGETS ${PROJECT_NAME} NAMESPACE Khepri:: FILE KhepriTargets.cmake)
 install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME})
 install(DIRECTORY include/khepri DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT ${PROJECT_NAME} DESTINATION lib)
+
+add_subdirectory(tools)
 
 #
 # Tests

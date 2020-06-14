@@ -11,4 +11,11 @@ public:
     using khepri::Error::Error;
 };
 
+/// A data stream has the wrong format
+class InvalidFormatError : public khepri::io::Error
+{
+public:
+    InvalidFormatError() : khepri::io::Error("invalid format") {}
+};
+
 } // namespace khepri::io
