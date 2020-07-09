@@ -20,6 +20,7 @@ add_library(${PROJECT_NAME}
     src/log/log.cpp
     src/math/matrix.cpp
     src/math/quaternion.cpp
+    src/physics/collision_mesh.cpp
     src/renderer/io/kmf.cpp
     src/renderer/camera.cpp
     src/renderer/model.cpp

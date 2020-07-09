@@ -5,44 +5,44 @@
 
 namespace khepri::io {
 
-/// Specialization of #khepri::io::SerializeTraits for #khepri::renderer::Model::Mesh::Vertex
+/// Specialization of #khepri::io::SerializeTraits for #khepri::renderer::Mesh::Vertex
 template <>
-struct SerializeTraits<renderer::Model::Mesh::Vertex>
+struct SerializeTraits<renderer::Mesh::Vertex>
 {
     /// \see #khepri::io::SerializeTraits::serialize
-    static void serialize(Serializer& s, const renderer::Model::Mesh::Vertex& value)
+    static void serialize(Serializer& s, const renderer::Mesh::Vertex& value)
     {
         s.write(value.position);
         s.write(value.normal);
     }
 
     /// \see #khepri::io::SerializeTraits::deserialize
-    static renderer::Model::Mesh::Vertex deserialize(Deserializer& d)
+    static renderer::Mesh::Vertex deserialize(Deserializer& d)
     {
-        renderer::Model::Mesh::Vertex vertex;
+        renderer::Mesh::Vertex vertex;
         vertex.position = d.read<Vector3>();
         vertex.normal   = d.read<Vector3>();
         return vertex;
     }
 };
 
-/// Specialization of #khepri::io::SerializeTraits for #khepri::renderer::Model::Mesh
+/// Specialization of #khepri::io::SerializeTraits for #khepri::renderer::Mesh
 template <>
-struct SerializeTraits<renderer::Model::Mesh>
+struct SerializeTraits<renderer::Mesh>
 {
     /// \see #khepri::io::SerializeTraits::serialize
-    static void serialize(Serializer& s, const renderer::Model::Mesh& value)
+    static void serialize(Serializer& s, const renderer::Mesh& value)
     {
         s.write(value.vertices);
         s.write(value.indices);
     }
 
     /// \see #khepri::io::SerializeTraits::deserialize
-    static renderer::Model::Mesh deserialize(Deserializer& d)
+    static renderer::Mesh deserialize(Deserializer& d)
     {
-        auto vertices = d.read<std::vector<renderer::Model::Mesh::Vertex>>();
-        auto indices  = d.read<std::vector<renderer::Model::Index>>();
-        return renderer::Model::Mesh{std::move(vertices), std::move(indices)};
+        auto vertices = d.read<std::vector<renderer::Mesh::Vertex>>();
+        auto indices  = d.read<std::vector<renderer::Mesh::Index>>();
+        return renderer::Mesh{std::move(vertices), std::move(indices)};
     }
 };
 
@@ -59,7 +59,7 @@ struct SerializeTraits<renderer::Model>
     /// \see #khepri::io::SerializeTraits::deserialize
     static renderer::Model deserialize(Deserializer& d)
     {
-        auto meshes = d.read<std::vector<renderer::Model::Mesh>>();
+        auto meshes = d.read<std::vector<renderer::Mesh>>();
         return renderer::Model(std::move(meshes));
     }
 };
