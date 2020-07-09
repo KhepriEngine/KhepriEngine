@@ -2,6 +2,7 @@
 
 namespace khepri::renderer::vulkan {
 
-void Renderer::render() {}
+void Renderer::render_meshes(gsl::span<const RenderableMeshInstance> meshes, const Camera& camera)
+{}
 
 } // namespace khepri::renderer::vulkan

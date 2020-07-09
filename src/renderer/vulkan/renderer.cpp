@@ -1,4 +1,5 @@
 #include "exceptions.hpp"
+#include "renderable_mesh.hpp"
 
 #include <khepri/log/log.hpp>
 #include <khepri/renderer/vulkan/renderer.hpp>
@@ -326,7 +327,7 @@ Renderer::Renderer(const char* application_name, SurfaceProvider& surface_provid
         VkDeviceQueueCreateInfo queue_info = {};
         queue_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queue_info.queueFamilyIndex        = graphics_device->graphics_queue_family_index;
-        queue_info.queueCount              = queue_priorities.size();
+        queue_info.queueCount              = static_cast<std::uint32_t>(queue_priorities.size());
         queue_info.pQueuePriorities        = queue_priorities.data();
 
         const auto vk_device_extensions = to_const_char_vector(device_extensions);
@@ -494,9 +495,10 @@ Renderer::SwapchainInfo Renderer::create_swapchain(VkDevice                  dev
 
         if (device_info.graphics_queue_family_index != device_info.present_queue_family_index) {
             // We're sharing the swap chain
-            create_info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-            create_info.queueFamilyIndexCount = queue_family_indices.size();
-            create_info.pQueueFamilyIndices   = queue_family_indices.data();
+            create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+            create_info.queueFamilyIndexCount =
+                static_cast<std::uint32_t>(queue_family_indices.size());
+            create_info.pQueueFamilyIndices = queue_family_indices.data();
         } else {
             create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         }
@@ -534,6 +536,26 @@ Renderer::SwapchainInfo Renderer::create_swapchain(VkDevice                  dev
     }
 
     return SwapchainInfo;
+}
+
+renderable_mesh_id Renderer::create_renderable_mesh(const Mesh& /*mesh*/)
+{
+    auto it = std::find(m_renderable_meshes.begin(), m_renderable_meshes.end(), nullptr);
+    if (it == m_renderable_meshes.end()) {
+        it = m_renderable_meshes.insert(m_renderable_meshes.end(), nullptr);
+    }
+
+    *it = std::make_unique<RenderableMesh>();
+
+    return it - m_renderable_meshes.begin();
+}
+
+void Renderer::destroy_renderable_mesh(renderable_mesh_id mesh_id)
+{
+    assert(mesh_id < m_renderable_meshes.size());
+    assert(m_renderable_meshes[mesh_id] != nullptr);
+
+    m_renderable_meshes[mesh_id] = nullptr;
 }
 
 } // namespace khepri::renderer::vulkan

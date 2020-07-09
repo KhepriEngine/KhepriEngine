@@ -15,6 +15,8 @@
 
 namespace khepri::renderer::vulkan {
 
+class RenderableMesh;
+
 /**
  * \brief Vulkan-based renderer
  *
@@ -78,10 +80,20 @@ public:
     Renderer& operator=(const Renderer&) = delete;
     Renderer& operator=(Renderer&&) = delete;
 
+    /// \see #khepri::renderer::Renderer::create_renderable_mesh
+    renderable_mesh_id create_renderable_mesh(const Mesh& mesh) override;
+
+    /// \see #khepri::renderer::Renderer::destroy_renderable_mesh
+    void destroy_renderable_mesh(renderable_mesh_id mesh_id) override;
+
     /**
-     * Renders to surface provides by the surface provider in the constructor.
+     * Renders a collection of meshes to the surface provided by the surface provider in the
+     * constructor.
+     *
+     * \see #khepri::renderer::Renderer::render_meshes
      */
-    void render() override;
+    void render_meshes(gsl::span<const RenderableMeshInstance> meshes,
+                       const Camera&                           camera) override;
 
 private:
     template <typename THandle>
@@ -117,6 +129,8 @@ private:
     UniqueVkHandle<VkSurfaceKHR, VkInstance>             m_surface;
     UniqueVkInstance<VkDevice>                           m_device;
     SwapchainInfo                                        m_swapchain;
+
+    std::vector<std::unique_ptr<RenderableMesh>> m_renderable_meshes;
 };
 
 } // namespace khepri::renderer::vulkan
