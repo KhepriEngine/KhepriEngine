@@ -21,6 +21,7 @@ add_library(${PROJECT_NAME}
     src/math/matrix.cpp
     src/math/quaternion.cpp
     src/renderer/io/kmf.cpp
+    src/renderer/camera.cpp
     src/renderer/model.cpp
     src/renderer/vulkan/renderer.cpp
     src/renderer/vulkan/render.cpp
