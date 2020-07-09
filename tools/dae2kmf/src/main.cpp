@@ -69,7 +69,7 @@ auto get_combined_transformation(const aiNode& node) noexcept
 
 khepri::renderer::Model create_model(const aiScene& scene)
 {
-    std::vector<khepri::renderer::Model::Mesh> meshes;
+    std::vector<khepri::renderer::Mesh> meshes;
 
     // Walk the scene hierarchy and find all items we want to export
     SceneInfo scene_info;
@@ -84,7 +84,7 @@ khepri::renderer::Model create_model(const aiScene& scene)
         // Calculate the combined transformation for this node
         const auto transform = get_combined_transformation(*mesh_info.node);
 
-        khepri::renderer::Model::Mesh mesh;
+        khepri::renderer::Mesh mesh;
 
         mesh.vertices.resize(src.mNumVertices);
 
