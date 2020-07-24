@@ -72,6 +72,9 @@ class KhepriEngineConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["Khepri"]
+        if self.settings.os == "Windows":
+            if self.settings.build_type == "Debug":
+                self.cpp_info.system_libs.append("DbgHelp")
 
     @staticmethod
     def _parse_version(version):
