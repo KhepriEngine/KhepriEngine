@@ -61,6 +61,13 @@ if(MSVC)
     PRIVATE
       _CRT_SECURE_NO_WARNINGS
   )
+
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    target_link_libraries(${PROJECT_NAME}
+      PRIVATE
+        DbgHelp
+    )
+  endif()
 endif()
 
 export(TARGETS ${PROJECT_NAME} NAMESPACE Khepri:: FILE KhepriTargets.cmake)

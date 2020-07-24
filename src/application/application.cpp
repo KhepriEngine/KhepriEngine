@@ -1,9 +1,16 @@
 #if defined(_MSC_VER)
 #include <Windows.h>
+#ifndef NDEBUG
+#include <dbghelp.h>
+#include <debugapi.h>
+#endif
 #endif
 
 #include <khepri/application/application.hpp>
 #include <khepri/log/log.hpp>
+
+#include <fmt/ranges.h>
+#include <gsl/gsl-lite.hpp>
 
 #include <array>
 
@@ -31,6 +38,90 @@ std::string get_current_directory()
     return curdir;
 #endif
 }
+
+#ifdef _MSC_VER
+void print_native_exception(HANDLE hProcess, EXCEPTION_POINTERS* exc_ptrs)
+{
+    if (exc_ptrs == nullptr || exc_ptrs->ExceptionRecord == nullptr) {
+        LOG.error("Caught unknown native exception");
+    } else {
+        const auto* exceptr = exc_ptrs->ExceptionRecord;
+        auto*       context = exc_ptrs->ContextRecord;
+
+        gsl::span<const ULONG_PTR> params(&exceptr->ExceptionInformation[0],
+                                          exceptr->NumberParameters);
+
+        LOG.error("Caught native exception: code={:#x}, flags={}, address={:p}, params={{{:#x}}}",
+                  exceptr->ExceptionCode, exceptr->ExceptionFlags, exceptr->ExceptionAddress,
+                  fmt::join(params, ", "));
+#ifndef NDEBUG
+        DWORD machine_type = 0;
+#if defined(_M_IX86)
+        machine_type = IMAGE_FILE_MACHINE_I386;
+#elif defined(_M_IA64)
+        machine_type = IMAGE_FILE_MACHINE_IA64;
+#elif defined(_M_AMD64) || defined(_M_X64)
+        machine_type = IMAGE_FILE_MACHINE_AMD64;
+#endif
+        LOG.error("Stack trace:");
+
+        STACKFRAME frame{};
+        while (StackWalk64(machine_type, hProcess, GetCurrentThread(), &frame, context, nullptr,
+                           SymFunctionTableAccess64, SymGetModuleBase64, nullptr) != FALSE) {
+            LOG.error(" - {:#018x}", frame.AddrPC.Offset);
+        }
+#endif
+    }
+}
+
+template <typename TCallable>
+void handle_native_exceptions(TCallable callable)
+{
+#ifndef NDEBUG
+    // Don't catch exceptions in debug builds if a debugger is attached -- the debugger will catch
+    // them instead
+    if (IsDebuggerPresent()) {
+        callable();
+        return;
+    }
+#endif
+
+    HANDLE hProcess = GetCurrentProcess();
+#ifndef NDEBUG
+    SymInitialize(hProcess, nullptr, TRUE);
+#endif
+    __try {
+        callable();
+        // NOLINTNEXTLINE -- GetExceptionInformation is a macro and confuses clang-tidy
+    } __except (print_native_exception(hProcess, GetExceptionInformation()),
+                EXCEPTION_EXECUTE_HANDLER) {
+    }
+#ifndef NDEBUG
+    SymCleanup(hProcess);
+#endif
+}
+#else
+template <typename TCallable>
+void handle_native_exceptions(TCallable callable)
+{
+    callable();
+}
+#endif
+
+template <typename TCallable>
+void handle_language_exceptions(TCallable callable)
+{
+    try {
+        callable();
+    } catch (std::exception& e) {
+        LOG.error("Caught unhandled exception: {}", e.what());
+#ifdef _MSC_VER
+        MessageBoxA(nullptr, e.what(), nullptr, MB_OK);
+#endif
+    } catch (...) {
+        LOG.error("Caught unhandled unknown exception");
+    }
+}
 } // namespace
 
 Application::Application(std::string_view application_name) : m_application_name(application_name)
@@ -55,18 +146,7 @@ bool Application::run() noexcept
     LOG.info("Application starting up in \"{}\"", curdir);
 
     Window window(m_application_name);
-    try {
-        do_run(window, curdir);
-    } catch (std::exception& e) {
-        LOG.error("Caught unhandled exception: {}", e.what());
-#ifdef _MSC_VER
-        MessageBoxA(nullptr, e.what(), nullptr, MB_OK);
-#endif
-        return false;
-    } catch (...) {
-        LOG.error("Caught unhandled unknown exception");
-        return false;
-    }
+    handle_native_exceptions([&] { handle_language_exceptions([&] { do_run(window, curdir); }); });
     LOG.info("Application shutting down");
 
     std::set_terminate(m_previous_terminate_handler);
