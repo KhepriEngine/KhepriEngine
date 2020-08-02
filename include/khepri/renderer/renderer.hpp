@@ -1,10 +1,12 @@
 #pragma once
 
-#include "model.hpp"
+#include "mesh.hpp"
 #include "renderable_mesh_id.hpp"
 #include "renderable_mesh_instance.hpp"
+#include "shader.hpp"
 
 #include <khepri/math/matrix.hpp>
+#include <khepri/math/size.hpp>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -13,6 +15,33 @@
 namespace khepri::renderer {
 
 class Camera;
+
+using pipeline_id = std::size_t;
+
+/**
+ * Description of a pipeline stage
+ */
+struct StageDesc
+{
+    /// Vertex shader for this stage
+    const Shader* vertex_shader;
+
+    /// Fragment shader for this stage
+    const Shader* fragment_shader;
+};
+
+/**
+ * Describes a render pipeline.
+ *
+ * A render pipeline consists of a single render stage.
+ */
+struct PipelineDesc
+{
+    /**
+     * Stage in this pipeline
+     */
+    StageDesc stage;
+};
 
 /**
  * \brief Interface for renderers
@@ -29,6 +58,30 @@ public:
     Renderer(Renderer&&)      = delete;
     Renderer& operator=(const Renderer&) = delete;
     Renderer& operator=(Renderer&&) = delete;
+
+    /**
+     * Returns the size of the rendering area
+     */
+    [[nodiscard]] virtual Size render_size() const noexcept = 0;
+
+    /**
+     * \brief Creates a render pipeline.
+     *
+     * Meshes are rendered by a render pipeline. A render pipeline contains render stages with
+     * shaders and render targets and their dependencies.
+     *
+     * \param[in] desc a description of the pipeline to render.
+     *
+     * \return the ID of the newly created pipeline.
+     */
+    virtual pipeline_id create_render_pipeline(const PipelineDesc& desc) = 0;
+
+    /**
+     * \brief Destroys a render pipeline.
+     *
+     * \param[in] pipeline the ID of the render pipeline to destroy.
+     */
+    virtual void destroy_render_pipeline(pipeline_id pipeline) = 0;
 
     /**
      * \brief Creates a renderable mesh from a normal mesh.
@@ -58,11 +111,12 @@ public:
     /**
      * Renders a collection of meshes.
      *
+     * \param[in] pipeline the ID of the pipeline to use for rendering
      * \param[in] meshes a collection of meshes to render.
      * \param[in] camera the camera to render them with.
      */
-    virtual void render_meshes(gsl::span<const RenderableMeshInstance> meshes,
-                               const Camera&                           camera) = 0;
+    virtual void render_meshes(pipeline_id pipeline, gsl::span<const RenderableMeshInstance> meshes,
+                               const Camera& camera) = 0;
 };
 
 } // namespace khepri::renderer
