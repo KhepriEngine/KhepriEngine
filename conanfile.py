@@ -41,6 +41,7 @@ class KhepriEngineConan(ConanFile):
         ("fmt/[>=6.0 <7.0]"),
         ("glfw/[>=3.0 <4.0]"),
         ("gsl-lite/0.36.0"),
+        ("shaderc/2021.1"),
         ("vulkan-headers/[>=1.3]"),
     ]
 
