@@ -1,6 +1,6 @@
 #pragma once
 
-#include "detail/memory.hpp"
+#include "detail/device_info.hpp"
 
 #include <khepri/math/size.hpp>
 #include <khepri/renderer/renderer.hpp>
@@ -16,6 +16,7 @@
 namespace khepri::renderer::vulkan {
 
 class RenderableMesh;
+class RenderPipeline;
 
 /**
  * \brief Vulkan-based renderer
@@ -80,6 +81,15 @@ public:
     Renderer& operator=(const Renderer&) = delete;
     Renderer& operator=(Renderer&&) = delete;
 
+    /// \see #khepri::renderer::Renderer::render_size
+    [[nodiscard]] Size render_size() const noexcept override;
+
+    /// \see #khepri::renderer::Renderer::create_render_pipeline
+    pipeline_id create_render_pipeline(const PipelineDesc& desc) override;
+
+    /// \see #khepri::renderer::Renderer::destroy_render_pipeline
+    void destroy_render_pipeline(pipeline_id pipeline) override;
+
     /// \see #khepri::renderer::Renderer::create_renderable_mesh
     renderable_mesh_id create_renderable_mesh(const Mesh& mesh) override;
 
@@ -92,8 +102,8 @@ public:
      *
      * \see #khepri::renderer::Renderer::render_meshes
      */
-    void render_meshes(gsl::span<const RenderableMeshInstance> meshes,
-                       const Camera&                           camera) override;
+    void render_meshes(pipeline_id pipeline, gsl::span<const RenderableMeshInstance> meshes,
+                       const Camera& camera) override;
 
 private:
     template <typename THandle>
@@ -102,35 +112,66 @@ private:
     template <typename THandle, typename TOwner>
     using UniqueVkHandle = detail::UniqueVkHandle<THandle, TOwner>;
 
-    struct GraphicsDeviceInfo;
+    using GraphicsDeviceInfo = detail::GraphicsDeviceInfo;
+    using DeviceInfo         = detail::DeviceInfo;
 
     struct SwapchainInfo
     {
-        UniqueVkHandle<VkSwapchainKHR, VkDevice>           handle{};
-        VkExtent2D                                         extent{};
-        VkFormat                                           format{};
-        std::vector<VkImage>                               images{};
-        std::vector<UniqueVkHandle<VkImageView, VkDevice>> image_views{};
+        UniqueVkHandle<VkSwapchainKHR, VkDevice> handle;
+        VkExtent2D                               extent{};
+
+        // Backbuffer image
+        VkFormat                                           image_format{};
+        std::vector<VkImage>                               images;
+        std::vector<UniqueVkHandle<VkImageView, VkDevice>> image_views;
+
+        // Depth buffer
+        VkFormat                                 depth_format{};
+        UniqueVkHandle<VkImage, VkDevice>        depth_image;
+        UniqueVkHandle<VkDeviceMemory, VkDevice> depth_image_memory;
+        UniqueVkHandle<VkImageView, VkDevice>    depth_image_view;
+
+        // Command buffers (one per backbuffer image)
+        std::vector<VkCommandBuffer> commandbuffers;
+
+        // Shader constants buffers (one per backbuffer image)
+        std::vector<UniqueVkHandle<VkBuffer, VkDevice>>       uniform_buffers;
+        std::vector<UniqueVkHandle<VkDeviceMemory, VkDevice>> uniform_buffers_memory;
+        UniqueVkHandle<VkDescriptorPool, VkDevice>            descriptor_pool;
+        std::vector<VkDescriptorSet>                          descriptor_sets;
     };
 
     static std::optional<GraphicsDeviceInfo>
     find_graphics_device(VkInstance instance, VkSurfaceKHR present_surface,
                          const std::vector<std::string>& required_extensions);
 
-    static SwapchainInfo create_swapchain(VkDevice device, const GraphicsDeviceInfo& device_info,
+    static DeviceInfo create_device(VkInstance instance, VkSurfaceKHR surface);
+
+    static SwapchainInfo create_swapchain(const DeviceInfo& device, VkCommandPool commandpool,
+                                          VkDescriptorSetLayout descriptor_set_layout,
                                           VkSurfaceKHR surface, const Size& surface_size);
 
     static std::optional<Renderer::GraphicsDeviceInfo>
     get_compatible_device_info(VkPhysicalDevice physical_device, VkSurfaceKHR present_surface,
                                const std::vector<std::string>& required_extensions);
 
+    void recreate_swapchain();
+    void recreate_render_pipeline(RenderPipeline& pipeline);
+
+    SurfaceProvider&                                     m_surface_provider;
     UniqueVkInstance<VkInstance>                         m_instance;
     UniqueVkHandle<VkDebugUtilsMessengerEXT, VkInstance> m_debug_messenger;
+    detail::DeviceInfo                                   m_device;
     UniqueVkHandle<VkSurfaceKHR, VkInstance>             m_surface;
-    UniqueVkInstance<VkDevice>                           m_device;
+    UniqueVkHandle<VkCommandPool, VkDevice>              m_commandpool;
+    UniqueVkHandle<VkDescriptorSetLayout, VkDevice>      m_descriptor_set_layout;
     SwapchainInfo                                        m_swapchain;
 
+    UniqueVkHandle<VkSemaphore, VkDevice> m_image_available_semaphore;
+    UniqueVkHandle<VkSemaphore, VkDevice> m_render_finished_semaphore;
+
     std::vector<std::unique_ptr<RenderableMesh>> m_renderable_meshes;
+    std::vector<std::unique_ptr<RenderPipeline>> m_render_pipelines;
 };
 
 } // namespace khepri::renderer::vulkan
