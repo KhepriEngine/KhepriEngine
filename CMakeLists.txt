@@ -8,6 +8,7 @@ project(Khepri CXX)
 find_package(fmt REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(gsl-lite REQUIRED)
+find_package(shaderc REQUIRED)
 find_package(Vulkan REQUIRED)
 
 add_library(${PROJECT_NAME}
@@ -22,8 +23,10 @@ add_library(${PROJECT_NAME}
     src/math/quaternion.cpp
     src/physics/collision_mesh.cpp
     src/renderer/io/kmf.cpp
+    src/renderer/io/ksf.cpp
     src/renderer/camera.cpp
     src/renderer/model.cpp
+    src/renderer/shader.cpp
     src/renderer/vulkan/renderer.cpp
     src/renderer/vulkan/render.cpp
     src/version_info.cpp
@@ -54,6 +57,7 @@ target_link_libraries(${PROJECT_NAME}
     glfw::glfw
     gsl::gsl-lite
     Vulkan::Vulkan
+    shaderc::shaderc
 )
 
 if(MSVC)
