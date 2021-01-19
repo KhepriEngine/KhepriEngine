@@ -2,7 +2,6 @@
 
 #include <khepri/io/serialize.hpp>
 #include <khepri/renderer/model.hpp>
-#include <khepri/renderer/shader.hpp>
 
 namespace khepri::io {
 
@@ -62,24 +61,6 @@ struct SerializeTraits<renderer::Model>
     {
         auto meshes = d.read<std::vector<renderer::Mesh>>();
         return renderer::Model(std::move(meshes));
-    }
-};
-
-/// Specialization of #khepri::io::SerializeTraits for #khepri::renderer::Shader
-template <>
-struct SerializeTraits<renderer::Shader>
-{
-    /// \see #khepri::io::SerializeTraits::serialize
-    static void serialize(Serializer& s, const renderer::Shader& value)
-    {
-        s.write(value.data());
-    }
-
-    /// \see #khepri::io::SerializeTraits::deserialize
-    static renderer::Shader deserialize(Deserializer& d)
-    {
-        auto data = d.read<std::vector<std::uint32_t>>();
-        return renderer::Shader(data);
     }
 };
 

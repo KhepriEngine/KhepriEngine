@@ -1,11 +1,12 @@
 #pragma once
 
-#include <khepri/renderer/vulkan/renderer.hpp>
+#include <khepri/math/size.hpp>
 
-#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <functional>
 #include <string>
+#include <vector>
 
 namespace khepri::application {
 
@@ -13,12 +14,15 @@ namespace khepri::application {
  * \brief A user-visible window
  *
  * A window is the primary means of interaction by the user with the application.
- * It can create surfaces that the renderer can render to and receives and handles
+ * It can provide native window handles for the renderer and receive and handle
  * input events.
  */
-class Window final : public renderer::vulkan::Renderer::SurfaceProvider
+class Window final
 {
 public:
+    /// Callback for "window size changed" events
+    using SizeListener = std::function<void()>;
+
     /**
      * Constructs the window
      * \param[in] title the title of the window, as visible in the title bar.
@@ -28,18 +32,17 @@ public:
     Window(Window&&)      = delete;
     Window& operator=(const Window&) = delete;
     Window& operator=(Window&&) = delete;
-    ~Window() override;
+    ~Window();
 
-    /// \see SurfaceProvider::required_extensions
-    [[nodiscard]] std::vector<std::string> required_extensions() const override;
+    /**
+     * Returns the native handle of this window.
+     */
+    [[nodiscard]] void* native_handle() const;
 
-    /// \see SurfaceProvider::create_surface
-    [[nodiscard]] VkResult create_surface(VkInstance                   instance,
-                                          const VkAllocationCallbacks* allocator,
-                                          VkSurfaceKHR*                surface) override;
-
-    /// \see SurfaceProvider::get_render_size
-    [[nodiscard]] Size get_render_size() const override;
+    /**
+     * Returns the size of the render area.
+     */
+    [[nodiscard]] Size render_size() const;
 
     /**
      * \brief Returns true if the window should close.
@@ -53,6 +56,12 @@ public:
     [[nodiscard]] bool should_close() const;
 
     /**
+     * Adds a listener for "window size changed" events.
+     * If invoked, call #render_size() to obtain the new render size.
+     */
+    void add_size_listener(const SizeListener& listener);
+
+    /**
      * \brief observer and handle new events on the process's event queue.
      *
      * Every process has a single event queue that all user input events are posted to.
@@ -62,7 +71,10 @@ public:
     static void poll_events();
 
 private:
-    GLFWwindow* m_window;
+    static void framebuffer_size_changed(GLFWwindow* windoww, int width, int height);
+
+    GLFWwindow*               m_window;
+    std::vector<SizeListener> m_size_listeners;
 };
 
 } // namespace khepri::application

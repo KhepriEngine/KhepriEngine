@@ -1,2 +1,1 @@
 add_subdirectory(dae2kmf)
-add_subdirectory(glsl2ksf)

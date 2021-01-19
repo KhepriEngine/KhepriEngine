@@ -12,7 +12,6 @@ Khepri requires:
 * [Doxygen](https://www.doxygen.nl/).
 * [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) 10.
 * [ClangTidy](https://clang.llvm.org/extra/clang-tidy/) 10.
-* [Vulkan SDK 1.2](https://vulkan.lunarg.com/sdk/home) or later.
 
 ## Getting Started
 

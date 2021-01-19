@@ -5,11 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 project(Khepri CXX)
 
 # External libraries
+find_package(diligent-core REQUIRED)
 find_package(fmt REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(gsl-lite REQUIRED)
-find_package(shaderc REQUIRED)
-find_package(Vulkan REQUIRED)
 
 add_library(${PROJECT_NAME}
     src/application/application.cpp
@@ -23,12 +22,9 @@ add_library(${PROJECT_NAME}
     src/math/quaternion.cpp
     src/physics/collision_mesh.cpp
     src/renderer/io/kmf.cpp
-    src/renderer/io/ksf.cpp
     src/renderer/camera.cpp
     src/renderer/model.cpp
-    src/renderer/shader.cpp
-    src/renderer/vulkan/renderer.cpp
-    src/renderer/vulkan/render.cpp
+    src/renderer/diligent/renderer.cpp
     src/version_info.cpp
     src/version.cpp
 )
@@ -56,14 +52,15 @@ target_link_libraries(${PROJECT_NAME}
     fmt::fmt
     glfw::glfw
     gsl::gsl-lite
-    Vulkan::Vulkan
-    shaderc::shaderc
+    diligent-core::diligent-core
 )
 
 if(MSVC)
   target_compile_definitions(${PROJECT_NAME}
     PRIVATE
       _CRT_SECURE_NO_WARNINGS
+    PUBLIC
+      PLATFORM_WIN32
   )
 
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")

@@ -15,7 +15,7 @@ namespace khepri::renderer {
 struct RenderableMeshInstance
 {
     /// Identifies the mesh this is an instance of
-    renderable_mesh_id mesh_id{};
+    RenderableMeshId mesh_id{};
 
     /// The transformation matrix for this instance
     Matrix transform{};

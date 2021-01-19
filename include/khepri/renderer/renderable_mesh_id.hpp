@@ -12,6 +12,6 @@ namespace khepri::renderer {
  *
  * \see #renderer::create_renderable_mesh
  */
-using renderable_mesh_id = std::size_t;
+using RenderableMeshId = std::size_t;
 
 } // namespace khepri::renderer
