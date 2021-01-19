@@ -38,11 +38,10 @@ class KhepriEngineConan(ConanFile):
     requires = [
         ("assimp/[>=5.0 <6.0]"),
         ("cxxopts/[>=2.0 <3.0]"),
+        ("diligent-core/[>=2.5.2 <3.0]"),
         ("fmt/[>=6.0 <7.0]"),
         ("glfw/[>=3.0 <4.0]"),
         ("gsl-lite/0.36.0"),
-        ("shaderc/2021.1"),
-        ("vulkan-headers/[>=1.3]"),
     ]
 
     build_requires = [
@@ -74,6 +73,7 @@ class KhepriEngineConan(ConanFile):
     def package_info(self):
         self.cpp_info.libs = ["Khepri"]
         if self.settings.os == "Windows":
+            self.cpp_info.system_libs = ["dxgi", "d3d11", "d3dcompiler"]
             if self.settings.build_type == "Debug":
                 self.cpp_info.system_libs.append("DbgHelp")
 

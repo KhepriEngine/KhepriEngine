@@ -1,6 +1,8 @@
 #include <khepri/application/window.hpp>
 #include <khepri/log/log.hpp>
 
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #include <gsl/gsl-lite.hpp>
 
 namespace khepri::application {
@@ -17,31 +19,24 @@ Window::Window(const std::string& title)
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     m_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, title.c_str(), nullptr, nullptr);
+    glfwSetWindowUserPointer(m_window, this);
+    glfwSetFramebufferSizeCallback(m_window, framebuffer_size_changed);
     LOG.info("Created window: {}", (void*)m_window);
 }
 
 Window::~Window()
 {
+    glfwSetWindowUserPointer(m_window, nullptr);
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
-std::vector<std::string> Window::required_extensions() const
+void* Window::native_handle() const
 {
-    if (glfwVulkanSupported() == GLFW_FALSE) {
-        return {};
-    }
-    std::uint32_t count      = 0;
-    const char**  extensions = glfwGetRequiredInstanceExtensions(&count);
-
-    std::vector<std::string> result;
-    for (const auto& extension : gsl::span<const char*>(extensions, count)) {
-        result.emplace_back(extension);
-    }
-    return result;
+    return glfwGetWin32Window(m_window);
 }
 
-Size Window::get_render_size() const
+Size Window::render_size() const
 {
     int width  = 0;
     int height = 0;
@@ -49,20 +44,30 @@ Size Window::get_render_size() const
     return {static_cast<unsigned long>(width), static_cast<unsigned long>(height)};
 }
 
-VkResult Window::create_surface(VkInstance instance, const VkAllocationCallbacks* allocator,
-                                VkSurfaceKHR* surface)
-{
-    return glfwCreateWindowSurface(instance, m_window, allocator, surface);
-}
-
 bool Window::should_close() const
 {
     return glfwWindowShouldClose(m_window) == GLFW_TRUE;
 }
 
+void Window::add_size_listener(const SizeListener& listener)
+{
+    m_size_listeners.push_back(listener);
+}
+
 void Window::poll_events()
 {
     glfwPollEvents();
+}
+
+void Window::framebuffer_size_changed(GLFWwindow* w, int /*width*/, int /*height*/)
+{
+    void* data = glfwGetWindowUserPointer(w);
+    if (data != nullptr) {
+        auto* window = reinterpret_cast<Window*>(data); // NOLINT
+        for (const auto& listener : window->m_size_listeners) {
+            listener();
+        }
+    }
 }
 
 } // namespace khepri::application
