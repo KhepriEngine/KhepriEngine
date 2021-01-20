@@ -25,6 +25,22 @@ SHADER_TYPE to_shader_type(ShaderType shader_type) noexcept
     return SHADER_TYPE_VERTEX;
 }
 
+CULL_MODE to_cull_mode(CullMode cull_mode) noexcept
+{
+    switch (cull_mode) {
+    case CullMode::none:
+        return CULL_MODE_NONE;
+    case CullMode::back:
+        return CULL_MODE_BACK;
+    case CullMode::front:
+        return CULL_MODE_FRONT;
+    default:
+        break;
+    }
+    assert(false);
+    return CULL_MODE_NONE;
+}
+
 const char* get_entry_point(ShaderType shader_type) noexcept
 {
     switch (shader_type) {
@@ -158,6 +174,7 @@ PipelineId Renderer::create_render_pipeline(const PipelineDesc& desc)
     ci.GraphicsPipeline.RTVFormats[0]                = m_swapchain->GetDesc().ColorBufferFormat;
     ci.GraphicsPipeline.DSVFormat                    = m_swapchain->GetDesc().DepthBufferFormat;
     ci.GraphicsPipeline.DepthStencilDesc.DepthEnable = true;
+    ci.GraphicsPipeline.RasterizerDesc.CullMode      = to_cull_mode(desc.cull_mode);
 
     std::array<LayoutElement, 2> layout{
         LayoutElement{0, 0, 3, VT_FLOAT32, false, offsetof(Mesh::Vertex, position),
