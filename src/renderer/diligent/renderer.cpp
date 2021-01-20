@@ -157,7 +157,7 @@ PipelineId Renderer::create_render_pipeline(const PipelineDesc& desc)
     ci.GraphicsPipeline.NumRenderTargets             = 1;
     ci.GraphicsPipeline.RTVFormats[0]                = m_swapchain->GetDesc().ColorBufferFormat;
     ci.GraphicsPipeline.DSVFormat                    = m_swapchain->GetDesc().DepthBufferFormat;
-    ci.GraphicsPipeline.DepthStencilDesc.DepthEnable = false;
+    ci.GraphicsPipeline.DepthStencilDesc.DepthEnable = true;
 
     std::array<LayoutElement, 2> layout{
         LayoutElement{0, 0, 3, VT_FLOAT32, false, offsetof(Mesh::Vertex, position),
