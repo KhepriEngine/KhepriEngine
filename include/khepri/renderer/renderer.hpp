@@ -35,6 +35,13 @@ struct StageDesc
     ShaderId pixel_shader;
 };
 
+enum class CullMode
+{
+    none,
+    back,
+    front,
+};
+
 /**
  * Describes a render pipeline.
  *
@@ -43,9 +50,14 @@ struct StageDesc
 struct PipelineDesc
 {
     /**
+     * Cull mode
+     */
+    CullMode cull_mode{CullMode::back};
+
+    /**
      * Stage in this pipeline
      */
-    StageDesc stage;
+    StageDesc stage{};
 };
 
 /**
