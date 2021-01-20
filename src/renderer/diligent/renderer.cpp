@@ -38,6 +38,16 @@ const char* get_entry_point(ShaderType shader_type) noexcept
     assert(false);
     return nullptr;
 }
+
+struct InstanceConstantBuffer
+{
+    Matrix world;
+};
+
+struct ViewConstantBuffer
+{
+    Matrix view_proj;
+};
 } // namespace
 
 struct Renderer::RenderMesh
@@ -68,14 +78,26 @@ Renderer::Renderer(const NativeWindow& window)
     factory->CreateSwapChainD3D11(m_device, m_context, swapchain_desc, fullscreenmode_desc, window,
                                   &m_swapchain);
 
-    // Create constants buffer for vertex shader
-    BufferDesc desc;
-    desc.Name           = "VS constants CB";
-    desc.Size           = sizeof(Matrix);
-    desc.Usage          = USAGE_DYNAMIC;
-    desc.BindFlags      = BIND_UNIFORM_BUFFER;
-    desc.CPUAccessFlags = CPU_ACCESS_WRITE;
-    m_device->CreateBuffer(desc, nullptr, &m_constants_vs);
+    // Create constants buffers for vertex shader
+    {
+        BufferDesc desc;
+        desc.Name           = "VS Instance Constants";
+        desc.Size           = sizeof(InstanceConstantBuffer);
+        desc.Usage          = USAGE_DYNAMIC;
+        desc.BindFlags      = BIND_UNIFORM_BUFFER;
+        desc.CPUAccessFlags = CPU_ACCESS_WRITE;
+        m_device->CreateBuffer(desc, nullptr, &m_constants_instance);
+    }
+
+    {
+        BufferDesc desc;
+        desc.Name           = "VS View Constants";
+        desc.Size           = sizeof(ViewConstantBuffer);
+        desc.Usage          = USAGE_DYNAMIC;
+        desc.BindFlags      = BIND_UNIFORM_BUFFER;
+        desc.CPUAccessFlags = CPU_ACCESS_WRITE;
+        m_device->CreateBuffer(desc, nullptr, &m_constants_view);
+    }
 }
 
 Renderer::~Renderer() = default;
@@ -151,8 +173,10 @@ PipelineId Renderer::create_render_pipeline(const PipelineDesc& desc)
     RenderPipeline pipeline;
     m_device->CreateGraphicsPipelineState(ci, &pipeline.pipeline);
 
-    pipeline.pipeline->GetStaticVariableByName(SHADER_TYPE_VERTEX, "Constants")
-        ->Set(m_constants_vs);
+    pipeline.pipeline->GetStaticVariableByName(SHADER_TYPE_VERTEX, "InstanceConstants")
+        ->Set(m_constants_instance);
+    pipeline.pipeline->GetStaticVariableByName(SHADER_TYPE_VERTEX, "ViewConstants")
+        ->Set(m_constants_view);
     pipeline.pipeline->CreateShaderResourceBinding(&pipeline.shader_resource_binding, true);
 
     auto it = std::find_if(m_pipelines.begin(), m_pipelines.end(), [](const auto& p) {
@@ -242,6 +266,12 @@ void Renderer::render_meshes(PipelineId pipeline_id, gsl::span<const RenderableM
     m_context->CommitShaderResources(pipeline.shader_resource_binding,
                                      RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
+    {
+        MapHelper<ViewConstantBuffer> constants(m_context, m_constants_view, MAP_WRITE,
+                                                MAP_FLAG_DISCARD);
+        constants->view_proj = camera.matrices().view_proj;
+    }
+
     for (const auto& mesh_info : meshes) {
         assert(mesh_info.mesh_id < m_meshes.size());
         auto& mesh = m_meshes[mesh_info.mesh_id];
@@ -253,8 +283,9 @@ void Renderer::render_meshes(PipelineId pipeline_id, gsl::span<const RenderableM
         m_context->SetIndexBuffer(mesh.index_buffer, 0, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
         {
-            MapHelper<Matrix> constants(m_context, m_constants_vs, MAP_WRITE, MAP_FLAG_DISCARD);
-            *constants = mesh_info.transform * camera.matrices().view_proj;
+            MapHelper<InstanceConstantBuffer> constants(m_context, m_constants_instance, MAP_WRITE,
+                                                        MAP_FLAG_DISCARD);
+            constants->world = mesh_info.transform;
         }
 
         static_assert(sizeof(Mesh::Index) == sizeof(std::uint16_t));
