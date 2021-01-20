@@ -77,7 +77,8 @@ private:
     Diligent::RefCntAutoPtr<Diligent::IRenderDevice>  m_device;
     Diligent::RefCntAutoPtr<Diligent::IDeviceContext> m_context;
     Diligent::RefCntAutoPtr<Diligent::ISwapChain>     m_swapchain;
-    Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_constants_vs;
+    Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_constants_instance;
+    Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_constants_view;
 
     std::vector<Diligent::RefCntAutoPtr<Diligent::IShader>> m_shaders;
     std::vector<RenderPipeline>                             m_pipelines;
