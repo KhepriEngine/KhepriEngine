@@ -1,8 +1,14 @@
 #pragma once
 
+#include "camera.hpp"
+#include "material.hpp"
+#include "material_id.hpp"
 #include "mesh.hpp"
-#include "renderable_mesh_id.hpp"
-#include "renderable_mesh_instance.hpp"
+#include "mesh_id.hpp"
+#include "mesh_instance.hpp"
+#include "shader_id.hpp"
+#include "texture.hpp"
+#include "texture_id.hpp"
 
 #include <khepri/math/matrix.hpp>
 #include <khepri/math/size.hpp>
@@ -17,57 +23,6 @@
 #include <vector>
 
 namespace khepri::renderer {
-
-class Camera;
-
-using PipelineId = std::size_t;
-using ShaderId   = std::size_t;
-
-/**
- * Description of a pipeline stage
- */
-struct StageDesc
-{
-    /// Vertex shader for this stage
-    ShaderId vertex_shader;
-
-    /// Pixel shader for this stage
-    ShaderId pixel_shader;
-};
-
-enum class CullMode
-{
-    none,
-    back,
-    front,
-};
-
-/**
- * Describes a render pipeline.
- *
- * A render pipeline consists of a single render stage.
- */
-struct PipelineDesc
-{
-    /**
-     * Cull mode
-     */
-    CullMode cull_mode{CullMode::back};
-
-    /**
-     * Stage in this pipeline
-     */
-    StageDesc stage{};
-};
-
-/**
- * The type of shader
- */
-enum class ShaderType
-{
-    vertex,
-    pixel
-};
 
 /**
  * \brief Interface for renderers
@@ -101,27 +56,17 @@ public:
     /**
      * \brief Creates a shader by compiling a shader source file.
      *
+     * A shader is a pair of vertex and pixel shaders loaded from the same file.
+     * The vertex shader's entry point is called @c vs_main and the pixel shader's entry point is
+     * called @c ps_main.
+     *
      * \param path the path to the source file of the shader
-     * \param shader_type the type of shader to create from the source
      * \param loader the loader used to load files
      *
      * In case the shader source files contain includes of other files, @a loader is invoked
      * multiple times to load the needed files.
      */
-    virtual ShaderId create_shader(const std::filesystem::path& path, ShaderType shader_type,
-                                   const FileLoader& loader) = 0;
-
-    /**
-     * \brief Creates a render pipeline.
-     *
-     * Meshes are rendered by a render pipeline. A render pipeline contains render stages with
-     * shaders and render targets and their dependencies.
-     *
-     * \param[in] desc a description of the pipeline to render.
-     *
-     * \return the ID of the newly created pipeline.
-     */
-    virtual PipelineId create_render_pipeline(const PipelineDesc& desc) = 0;
+    virtual ShaderId create_shader(const std::filesystem::path& path, const FileLoader& loader) = 0;
 
     /**
      * \brief Destroys a shader.
@@ -131,36 +76,63 @@ public:
     virtual void destroy_shader(ShaderId shader) = 0;
 
     /**
-     * \brief Destroys a render pipeline.
+     * \brief Creates a material to be used when rendering meshes.
      *
-     * \param[in] pipeline the ID of the render pipeline to destroy.
+     * After creating a material, specify the returned ID in a #khepri::renderer::MeshInstance to
+     * render that mesh with the created material.
+     *
+     * \param material the material to create.
      */
-    virtual void destroy_render_pipeline(PipelineId pipeline) = 0;
+    virtual MaterialId create_material(const Material& material) = 0;
 
     /**
-     * \brief Creates a renderable mesh from a normal mesh.
+     * \brief Destroys a material.
      *
-     * A renderable mesh is a mesh that has been optimized for rendering and has rendering resources
-     * allocated. The returned value can be used in calls to the renderer to identify the created
-     * mesh. To free the resources allocated for the renderable mesh, call #destroy_renderable_mesh.
-     *
-     * \param[in] mesh the normal mesh to create a renderable mesh from.
-     *
-     * \return the ID of the created renderable mesh.
+     * \param[in] material the material to destroy.
      */
-    virtual RenderableMeshId create_renderable_mesh(const Mesh& mesh) = 0;
+    virtual void destroy_material(MaterialId material) = 0;
 
     /**
-     * \brief Destroys a renderable mesh.
+     * \brief Creates a texture from binary data.
      *
-     * Renderable meshes consume resources. Renderables meshes that are no longer intended to be
-     * used, should be destroyed to free those resources. After the destroying a renderable mesh,
-     * the ID becomes invalid and can be reused by the renderer for a new renderable mesh.
+     * Textures can be referenced by meshes for binding to shader arguments during rendering.
      *
-     * \param[in] mesh_id the ID of the renderable mesh to destroy.
+     * \param[in] texture the texture data.
+     *
+     * \return the ID of the newly created texture.
+     */
+    virtual TextureId create_texture(const Texture& texture) = 0;
+
+    /**
+     * \brief Destroys a texture.
+     *
+     * \param[in] texture the ID of the texture to destroy.
+     */
+    virtual void destroy_texture(TextureId texture) = 0;
+
+    /**
+     * \brief Creates a mesh from raw mesh data.
+     *
+     * The returned value can be used in calls to the renderer to identify the created
+     * mesh. To free the resources allocated for the mesh, call #destroy_mesh.
+     *
+     * \param[in] mesh the raw mesh data to create a mesh from.
+     *
+     * \return the ID of the created mesh.
+     */
+    virtual MeshId create_mesh(const Mesh& mesh) = 0;
+
+    /**
+     * \brief Destroys a mesh.
+     *
+     * Created meshes consume resources. Meshes that are no longer intended to be used, should be
+     * destroyed to free those resources. After destroying a mesh, the ID becomes invalid and can be
+     * reused by the renderer for a new mesh.
+     *
+     * \param[in] mesh_id the ID of the mesh to destroy.
      *
      */
-    virtual void destroy_renderable_mesh(RenderableMeshId mesh_id) = 0;
+    virtual void destroy_mesh(MeshId mesh_id) = 0;
 
     /**
      * Clears the render target.
@@ -173,14 +145,12 @@ public:
     virtual void present() = 0;
 
     /**
-     * Renders a collection of meshes.
+     * Renders a collection of meshe instances.
      *
-     * \param[in] pipeline the ID of the pipeline to use for rendering
-     * \param[in] meshes a collection of meshes to render.
+     * \param[in] meshes a collection of mesh instances to render.
      * \param[in] camera the camera to render them with.
      */
-    virtual void render_meshes(PipelineId pipeline, gsl::span<const RenderableMeshInstance> meshes,
-                               const Camera& camera) = 0;
+    virtual void render_meshes(gsl::span<const MeshInstance> meshes, const Camera& camera) = 0;
 };
 
 } // namespace khepri::renderer

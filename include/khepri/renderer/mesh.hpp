@@ -11,7 +11,6 @@ namespace khepri::renderer {
  * \brief A mesh
  *
  * A mesh consists of consecutive sets of triangle-faces.
- * The triangles are considered front-facing with CCW.
  */
 struct Mesh final
 {
@@ -26,6 +25,15 @@ struct Mesh final
 
         /// The vertex' normal vector
         Vector3 normal;
+
+        /// The vertex' tangent vector
+        Vector3 tangent;
+
+        /// The vertex' binormal vector
+        Vector3 binormal;
+
+        /// The vertex' texture coordinate
+        Vector2 uv;
     };
 
     /// The vertices in the mesh
