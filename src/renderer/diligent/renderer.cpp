@@ -109,8 +109,8 @@ void diligent_debug_message_callback(DEBUG_MESSAGE_SEVERITY severity, const char
 
 struct Renderer::ShaderData
 {
-    Diligent::RefCntAutoPtr<Diligent::IShader> vertex_shader;
-    Diligent::RefCntAutoPtr<Diligent::IShader> pixel_shader;
+    RefCntAutoPtr<IShader> vertex_shader;
+    RefCntAutoPtr<IShader> pixel_shader;
 };
 
 struct Renderer::MeshData
@@ -131,21 +131,21 @@ struct Renderer::MaterialData
         size_t                                    buffer_offset;
     };
 
-    Diligent::RefCntAutoPtr<Diligent::IPipelineState>         pipeline;
-    Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> shader_resource_binding;
-    Diligent::RefCntAutoPtr<Diligent::IBuffer>                param_buffer;
-    std::vector<Param>                                        params;
+    RefCntAutoPtr<IPipelineState>         pipeline;
+    RefCntAutoPtr<IShaderResourceBinding> shader_resource_binding;
+    RefCntAutoPtr<IBuffer>                param_buffer;
+    std::vector<Param>                    params;
 };
 
 struct Renderer::TextureData
 {
-    Diligent::RefCntAutoPtr<Diligent::ITexture> texture;
-    Diligent::ITextureView*                     shader_view{};
+    RefCntAutoPtr<ITexture> texture;
+    ITextureView*           shader_view{};
 };
 
 Renderer::Renderer(const NativeWindow& window)
 {
-    Diligent::SetDebugMessageCallback(diligent_debug_message_callback);
+    SetDebugMessageCallback(diligent_debug_message_callback);
 
     auto* factory = GetEngineFactoryD3D11();
 
@@ -219,7 +219,7 @@ ShaderId Renderer::create_shader(const std::filesystem::path& path, const FileLo
         ci.pShaderSourceStreamFactory = factory;
         ci.SourceLanguage             = SHADER_SOURCE_LANGUAGE_HLSL;
         ci.EntryPoint                 = entrypoint.c_str();
-        Diligent::RefCntAutoPtr<Diligent::IShader> shader;
+        RefCntAutoPtr<IShader> shader;
         m_device->CreateShader(ci, &shader);
         return shader;
     };
