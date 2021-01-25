@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <type_traits>
 #include <vector>
 
 namespace khepri::io {
@@ -88,9 +89,9 @@ private:
 };
 
 namespace detail {
-// Helper for serialize_traits for fixed-width integer types
+// Helper for serialize_traits for fixed-width unsigned integer types
 template <typename T>
-struct FixedWidthSerializeTraits
+struct FixedWidthUintSerializeTraits
 {
     static_assert(std::is_integral_v<T>);
     static_assert(std::is_unsigned_v<T>);
@@ -115,6 +116,24 @@ struct FixedWidthSerializeTraits
 private:
     static constexpr auto MASK_BYTE     = 0xff;
     static constexpr auto BITS_PER_BYTE = 8;
+};
+
+// Helper for serialize_traits for fixed-width signed integer types
+template <typename T>
+struct FixedWidthIntSerializeTraits
+{
+    static_assert(std::is_integral_v<T>);
+    static_assert(std::is_signed_v<T>);
+
+    static constexpr void serialize(Serializer& s, T value)
+    {
+        s.write(std::make_unsigned_t<T>(value));
+    }
+
+    static constexpr T deserialize(Deserializer& d)
+    {
+        return static_cast<T>(d.read<std::make_unsigned_t<T>>());
+    }
 };
 } // namespace detail
 
@@ -158,11 +177,19 @@ T Deserializer::read()
 }
 
 template <>
-struct SerializeTraits<std::uint16_t> : detail::FixedWidthSerializeTraits<std::uint16_t>
+struct SerializeTraits<std::uint16_t> : detail::FixedWidthUintSerializeTraits<std::uint16_t>
 {};
 
 template <>
-struct SerializeTraits<std::uint32_t> : detail::FixedWidthSerializeTraits<std::uint32_t>
+struct SerializeTraits<std::int16_t> : detail::FixedWidthIntSerializeTraits<std::int16_t>
+{};
+
+template <>
+struct SerializeTraits<std::uint32_t> : detail::FixedWidthUintSerializeTraits<std::uint32_t>
+{};
+
+template <>
+struct SerializeTraits<std::int32_t> : detail::FixedWidthIntSerializeTraits<std::int32_t>
 {};
 
 /// Specialization of #khepri::io::SerializeTraits for \c float
