@@ -5,6 +5,7 @@
 #include <khepri/renderer/camera.hpp>
 #include <khepri/renderer/diligent/renderer.hpp>
 
+#include <DebugOutput.h>
 #include <EngineFactoryD3D11.h>
 #include <MapHelper.hpp>
 #include <Sampler.h>
@@ -87,6 +88,23 @@ struct Overloaded : Ts...
 template <class... Ts>
 Overloaded(Ts...) -> Overloaded<Ts...>;
 
+void diligent_debug_message_callback(DEBUG_MESSAGE_SEVERITY severity, const char* message,
+                                     const char* /*function*/, const char* /*file*/, int /*line*/)
+{
+    switch (severity) {
+    case DEBUG_MESSAGE_SEVERITY_INFO:
+        LOG.info("{}", message);
+        break;
+    case DEBUG_MESSAGE_SEVERITY_WARNING:
+        LOG.warning("{}", message);
+        break;
+    case DEBUG_MESSAGE_SEVERITY_ERROR:
+    case DEBUG_MESSAGE_SEVERITY_FATAL_ERROR:
+        LOG.error("{}", message);
+        break;
+    }
+}
+
 } // namespace
 
 struct Renderer::ShaderData
@@ -127,6 +145,8 @@ struct Renderer::TextureData
 
 Renderer::Renderer(const NativeWindow& window)
 {
+    Diligent::SetDebugMessageCallback(diligent_debug_message_callback);
+
     auto* factory = GetEngineFactoryD3D11();
 
     EngineD3D11CreateInfo engine_ci;
