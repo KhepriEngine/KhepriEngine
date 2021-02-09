@@ -21,6 +21,9 @@ class Matrix final
     std::array<Vector4, 4> m_cols{};
 
 public:
+    /// The type of the matrix's components
+    using component_type = Vector4::component_type;
+
     /// Constructs an uninitialized matrix
     Matrix() noexcept = default;
 
