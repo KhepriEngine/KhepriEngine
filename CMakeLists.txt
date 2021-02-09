@@ -27,6 +27,7 @@ add_library(${PROJECT_NAME}
     src/renderer/camera.cpp
     src/renderer/model.cpp
     src/renderer/diligent/renderer.cpp
+    src/scene/scene_object.cpp
     src/utility/string.cpp
     src/version_info.cpp
     src/version.cpp
