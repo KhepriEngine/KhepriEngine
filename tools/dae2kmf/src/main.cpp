@@ -1,6 +1,6 @@
 #include <khepri/io/file.hpp>
 #include <khepri/renderer/io/kmf.hpp>
-#include <khepri/renderer/model.hpp>
+#include <khepri/renderer/model_desc.hpp>
 #include <khepri/version.hpp>
 
 #include <assimp/Importer.hpp>
@@ -67,9 +67,9 @@ auto get_combined_transformation(const aiNode& node) noexcept
     return transform;
 }
 
-khepri::renderer::Model create_model(const aiScene& scene)
+khepri::renderer::ModelDesc create_model(const aiScene& scene)
 {
-    std::vector<khepri::renderer::Mesh> meshes;
+    std::vector<khepri::renderer::MeshDesc> meshes;
 
     // Walk the scene hierarchy and find all items we want to export
     SceneInfo scene_info;
@@ -84,7 +84,7 @@ khepri::renderer::Model create_model(const aiScene& scene)
         // Calculate the combined transformation for this node
         const auto transform = get_combined_transformation(*mesh_info.node);
 
-        khepri::renderer::Mesh mesh;
+        khepri::renderer::MeshDesc mesh;
 
         mesh.vertices.resize(src.mNumVertices);
 
@@ -115,7 +115,7 @@ khepri::renderer::Model create_model(const aiScene& scene)
         meshes.push_back(std::move(mesh));
     }
 
-    return khepri::renderer::Model(std::move(meshes));
+    return khepri::renderer::ModelDesc(std::move(meshes));
 }
 } // namespace
 

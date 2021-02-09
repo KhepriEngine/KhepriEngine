@@ -1,50 +1,27 @@
 #pragma once
 
-#include <khepri/math/vector3.hpp>
-
-#include <cstdint>
-#include <vector>
+#include <cstddef>
 
 namespace khepri::renderer {
 
 /**
- * \brief A mesh
+ * \brief A mesh.
  *
- * A mesh consists of consecutive sets of triangle-faces.
+ * A mesh is a collection of geometry that can be rendered. Meshes are created by a
+ * #khepri::renderer::Renderer.
+ *
+ * \see #khepri::renderer::Renderer::create_mesh
  */
-struct Mesh final
+class Mesh
 {
-    /// Integer size of indexes
-    using Index = std::uint16_t;
+public:
+    Mesh()          = default;
+    virtual ~Mesh() = default;
 
-    /// Describes a single vertex in the mesh
-    struct Vertex
-    {
-        /// The vertex' position
-        Vector3 position;
-
-        /// The vertex' normal vector
-        Vector3 normal;
-
-        /// The vertex' tangent vector
-        Vector3 tangent;
-
-        /// The vertex' binormal vector
-        Vector3 binormal;
-
-        /// The vertex' texture coordinate
-        Vector2 uv;
-    };
-
-    /// The vertices in the mesh
-    std::vector<Vertex> vertices;
-
-    /**
-     * \brief The indices of the faces in the mesh.
-     *
-     * Each face is defined by a consecutive triplet of indices into #vertices.
-     */
-    std::vector<Index> indices;
+    Mesh(const Mesh&) = delete;
+    Mesh(Mesh&&)      = delete;
+    Mesh& operator=(const Mesh&) = delete;
+    Mesh& operator=(Mesh&&) = delete;
 };
 
 } // namespace khepri::renderer

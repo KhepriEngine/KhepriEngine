@@ -24,7 +24,7 @@ void require(bool condition)
 }
 } // namespace
 
-Model load_kmf(khepri::io::Stream& stream)
+ModelDesc load_kmf(khepri::io::Stream& stream)
 {
     if (!stream.readable() || !stream.seekable()) {
         throw ArgumentError();
@@ -42,13 +42,13 @@ Model load_kmf(khepri::io::Stream& stream)
 
     try {
         khepri::io::Deserializer deserializer(buffer);
-        return deserializer.read<Model>();
+        return deserializer.read<ModelDesc>();
     } catch (const khepri::io::Error&) {
         throw khepri::io::InvalidFormatError();
     }
 }
 
-void write_kmf(const Model& model, khepri::io::Stream& stream)
+void write_kmf(const ModelDesc& model, khepri::io::Stream& stream)
 {
     if (!stream.writable() || !stream.seekable()) {
         throw ArgumentError();

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "material.hpp"
-#include "material_id.hpp"
-#include "mesh_id.hpp"
-#include "texture_id.hpp"
+#include "material_desc.hpp"
+#include "mesh.hpp"
+#include "texture.hpp"
 
 #include <khepri/math/matrix.hpp>
 #include <khepri/math/vector2.hpp>
@@ -29,7 +29,7 @@ namespace khepri::renderer {
 struct MeshInstance
 {
     /// Parameter value
-    using ParamValue = Material::PropertyValue;
+    using ParamValue = MaterialDesc::PropertyValue;
 
     /// Parameter description
     struct Param
@@ -40,14 +40,14 @@ struct MeshInstance
         ParamValue value;
     };
 
-    /// Identifies the mesh this is an instance of
-    MeshId mesh_id;
+    /// The mesh this is an instance of
+    Mesh* mesh{nullptr};
 
     /// The transformation matrix for this instance
     Matrix transform;
 
-    /// The ID of the material to render this instance with
-    MaterialId material_id;
+    /// Tthe material to render this instance with
+    Material* material{nullptr};
 
     /// Material parameters for this instance
     gsl::span<const Param> material_params;

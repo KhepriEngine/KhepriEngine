@@ -2,7 +2,7 @@
 
 #include <khepri/math/sphere.hpp>
 #include <khepri/physics/collision_mesh.hpp>
-#include <khepri/renderer/mesh.hpp>
+#include <khepri/renderer/mesh_desc.hpp>
 
 #include <vector>
 
@@ -14,11 +14,11 @@ namespace khepri::renderer {
  * A model is a collection of data structures related to its meshes that make up a single game
  * entity
  */
-class Model
+class ModelDesc
 {
 public:
     /// Constructs a model from meshes
-    Model(std::vector<Mesh> meshes);
+    ModelDesc(std::vector<MeshDesc> meshes);
 
     /// Returns the meshes in this model
     [[nodiscard]] const auto& meshes() const noexcept
@@ -39,7 +39,7 @@ public:
     }
 
 private:
-    std::vector<Mesh>      m_meshes;
+    std::vector<MeshDesc>  m_meshes;
     Sphere                 m_bounding_sphere;
     physics::CollisionMesh m_collision_mesh;
 };
