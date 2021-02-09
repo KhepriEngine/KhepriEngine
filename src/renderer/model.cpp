@@ -1,10 +1,10 @@
-#include <khepri/renderer/model.hpp>
+#include <khepri/renderer/model_desc.hpp>
 
 #include <algorithm>
 
 namespace khepri::renderer {
 namespace {
-auto compute_bounding_sphere(const std::vector<Mesh>& meshes)
+auto compute_bounding_sphere(const std::vector<MeshDesc>& meshes)
 {
     // We center the bounding sphere at 0,0,0 in object space because that's
     // the pivot point for rotations. That means we don't need to consider the
@@ -24,7 +24,7 @@ auto compute_bounding_sphere(const std::vector<Mesh>& meshes)
     return Sphere(center, radius);
 }
 
-auto create_collision_mesh(const std::vector<Mesh>& meshes)
+auto create_collision_mesh(const std::vector<MeshDesc>& meshes)
 {
     std::vector<Vector3>                       vertices;
     std::vector<physics::CollisionMesh::Index> indices;
@@ -41,7 +41,7 @@ auto create_collision_mesh(const std::vector<Mesh>& meshes)
 }
 } // namespace
 
-Model::Model(std::vector<Mesh> meshes)
+ModelDesc::ModelDesc(std::vector<MeshDesc> meshes)
     : m_meshes(std::move(meshes))
     , m_bounding_sphere(compute_bounding_sphere(m_meshes))
     , m_collision_mesh(create_collision_mesh(m_meshes))

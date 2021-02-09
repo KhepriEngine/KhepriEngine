@@ -1,76 +1,27 @@
 #pragma once
 
-#include "shader_id.hpp"
-#include "texture_id.hpp"
-
-#include <khepri/math/matrix.hpp>
-#include <khepri/math/vector2.hpp>
-#include <khepri/math/vector3.hpp>
-#include <khepri/math/vector4.hpp>
-
-#include <string>
-#include <variant>
-#include <vector>
+#include <cstddef>
 
 namespace khepri::renderer {
 
 /**
- * \brief Description of a material
+ * \brief A material.
  *
- * A material is defined by a collection of shaders and a collection of related properties
- * (integers, floats, vectors, matrices and textures) that can be passed into a shader when
- * rendering a mesh.
+ * A material is a collection of shaders and a collection of related properties for rendering a
+ * #khepri::renderer::Mesh. Materials are created by a #khepri::renderer::Renderer.
  *
- * The properties in a material can be set by name in a #khepri::renderer::MeshInstance when passed
- * to the renderer. The specified (non-texture) properties are set in the shader's constant buffer
- * with name @c Material (if present). Texture properties are set on the shader's texture resource
- * with the same name directly.
+ * \see #khepri::renderer::Renderer::create_material
  */
-struct Material
+class Material
 {
-    /// The type of face culling
-    enum class CullMode
-    {
-        none,
-        back,
-        front,
-    };
+public:
+    Material()          = default;
+    virtual ~Material() = default;
 
-    /// The type of a material property
-    enum class PropertyType
-    {
-        integer,
-        floating,
-        vector2,
-        vector3,
-        vector4,
-        matrix,
-        texture,
-    };
-
-    /// Value of a material shader property
-    using PropertyValue =
-        std::variant<std::int32_t, float, Vector2, Vector3, Vector4, Matrix, TextureId>;
-
-    /// Description of a material shader property
-    struct Property
-    {
-        /// Property name
-        std::string name;
-
-        /// Default value of the property if none is provided by the mesh instance; this also
-        /// determines the property's type
-        PropertyValue default_value;
-    };
-
-    /// Face culling mode of this material
-    CullMode cull_mode{};
-
-    /// Shader of this material
-    ShaderId shader{};
-
-    /// Shader properties of this material
-    std::vector<Property> properties{};
+    Material(const Material&) = delete;
+    Material(Material&&)      = delete;
+    Material& operator=(const Material&) = delete;
+    Material& operator=(Material&&) = delete;
 };
 
 } // namespace khepri::renderer

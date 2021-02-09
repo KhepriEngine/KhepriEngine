@@ -2,7 +2,7 @@
 
 #include <khepri/io/exceptions.hpp>
 #include <khepri/renderer/io/texture.hpp>
-#include <khepri/renderer/texture.hpp>
+#include <khepri/renderer/texture_desc.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -113,7 +113,7 @@ auto create_subresources(unsigned long width, unsigned long height, unsigned lon
     auto   mip_height  = height;
     auto   mip_depth   = depth;
 
-    std::vector<struct Texture::Subresource> subresources(mip_levels);
+    std::vector<struct TextureDesc::Subresource> subresources(mip_levels);
     for (size_t mip = 0; mip < mip_levels; ++mip) {
         auto& subresource = subresources[mip];
 
@@ -149,7 +149,7 @@ auto create_subresources(unsigned long width, unsigned long height, unsigned lon
 
 } // namespace
 
-Texture load_texture(khepri::io::Stream& stream)
+TextureDesc load_texture(khepri::io::Stream& stream)
 {
     auto dimension = TextureDimension::texture_2d;
 
@@ -244,8 +244,8 @@ Texture load_texture(khepri::io::Stream& stream)
 
     const size_t depth_array_size = (dimension == TextureDimension::texture_3d) ? depth : 0;
 
-    return Texture(dimension, width, height, depth_array_size, mip_levels, *format,
-                   std::move(subresources), std::move(data));
+    return TextureDesc(dimension, width, height, depth_array_size, mip_levels, *format,
+                       std::move(subresources), std::move(data));
 }
 
 } // namespace khepri::renderer::io

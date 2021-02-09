@@ -31,14 +31,14 @@ struct ViewConstantBuffer
     Matrix view_proj;
 };
 
-CULL_MODE to_cull_mode(Material::CullMode cull_mode) noexcept
+CULL_MODE to_cull_mode(MaterialDesc::CullMode cull_mode) noexcept
 {
     switch (cull_mode) {
-    case Material::CullMode::none:
+    case MaterialDesc::CullMode::none:
         return CULL_MODE_NONE;
-    case Material::CullMode::back:
+    case MaterialDesc::CullMode::back:
         return CULL_MODE_BACK;
-    case Material::CullMode::front:
+    case MaterialDesc::CullMode::front:
         return CULL_MODE_FRONT;
     default:
         break;
@@ -107,28 +107,28 @@ void diligent_debug_message_callback(DEBUG_MESSAGE_SEVERITY severity, const char
 
 } // namespace
 
-struct Renderer::ShaderData
+struct Renderer::Shader : public khepri::renderer::Shader
 {
     RefCntAutoPtr<IShader> vertex_shader;
     RefCntAutoPtr<IShader> pixel_shader;
 };
 
-struct Renderer::MeshData
+struct Renderer::Mesh : public khepri::renderer::Mesh
 {
-    using Index = khepri::renderer::Mesh::Index;
+    using Index = khepri::renderer::MeshDesc::Index;
 
     Index                  index_count{0};
     RefCntAutoPtr<IBuffer> vertex_buffer;
     RefCntAutoPtr<IBuffer> index_buffer;
 };
 
-struct Renderer::MaterialData
+struct Renderer::Material : public khepri::renderer::Material
 {
     struct Param
     {
-        std::string                               name;
-        khepri::renderer::Material::PropertyValue default_value;
-        size_t                                    buffer_offset;
+        std::string                                   name;
+        khepri::renderer::MaterialDesc::PropertyValue default_value;
+        size_t                                        buffer_offset;
     };
 
     RefCntAutoPtr<IPipelineState>         pipeline;
@@ -137,7 +137,7 @@ struct Renderer::MaterialData
     std::vector<Param>                    params;
 };
 
-struct Renderer::TextureData
+struct Renderer::Texture : public khepri::renderer::Texture
 {
     RefCntAutoPtr<ITexture> texture;
     ITextureView*           shader_view{};
@@ -206,7 +206,8 @@ Size Renderer::render_size() const noexcept
     return {desc.Width, desc.Height};
 }
 
-ShaderId Renderer::create_shader(const std::filesystem::path& path, const FileLoader& loader)
+std::unique_ptr<Shader> Renderer::create_shader(const std::filesystem::path& path,
+                                                const ShaderLoader&          loader)
 {
     RefCntAutoPtr<ShaderStreamFactory> factory(MakeNewRCObj<ShaderStreamFactory>()(loader));
 
@@ -224,30 +225,14 @@ ShaderId Renderer::create_shader(const std::filesystem::path& path, const FileLo
         return shader;
     };
 
-    ShaderData data = {create_shader_object(path.string(), SHADER_TYPE_VERTEX, "vs_main"),
-                       create_shader_object(path.string(), SHADER_TYPE_PIXEL, "ps_main")};
-
-    auto it = std::find_if(m_shaders.begin(), m_shaders.end(), [](const auto& s) {
-        return s.vertex_shader == nullptr && s.pixel_shader == nullptr;
-    });
-    if (it == m_shaders.end()) {
-        it = m_shaders.emplace(m_shaders.end());
-    }
-    *it = std::move(data);
-    return it - m_shaders.begin();
+    auto shader           = std::make_unique<Shader>();
+    shader->vertex_shader = create_shader_object(path.string(), SHADER_TYPE_VERTEX, "vs_main");
+    shader->pixel_shader  = create_shader_object(path.string(), SHADER_TYPE_PIXEL, "ps_main");
+    return shader;
 }
 
-void Renderer::destroy_shader(ShaderId shader_id)
-{
-    if (shader_id >= m_shaders.size()) {
-        throw ArgumentError();
-    }
-    m_shaders[shader_id] = {};
-}
-
-std::vector<std::string>
-Renderer::determine_dynamic_material_variables(const ShaderData&                      shader,
-                                               const std::vector<Material::Property>& properties)
+std::vector<std::string> Renderer::determine_dynamic_material_variables(
+    const Shader& shader, const std::vector<MaterialDesc::Property>& properties)
 {
     // Any top-level material property with the same name as these is an error
     const std::unordered_map<std::string, SHADER_RESOURCE_TYPE> predefined_variables{
@@ -280,7 +265,7 @@ Renderer::determine_dynamic_material_variables(const ShaderData&                
     // Validate properties and collect all dynamic top-level materials
     std::vector<std::string> dynamic_variables;
     for (const auto& p : properties) {
-        if (!std::holds_alternative<TextureId>(p.default_value)) {
+        if (!std::holds_alternative<khepri::renderer::Texture*>(p.default_value)) {
             // Non-texture properties are fine, they are in a cbuffer and not top-level variables
             continue;
         }
@@ -316,19 +301,19 @@ Renderer::determine_dynamic_material_variables(const ShaderData&                
     return dynamic_variables;
 }
 
-MaterialId Renderer::create_material(const khepri::renderer::Material& material)
+std::unique_ptr<Material>
+Renderer::create_material(const khepri::renderer::MaterialDesc& material_desc)
 {
-    if (material.shader >= m_shaders.size()) {
+    auto* const shader = dynamic_cast<Shader*>(material_desc.shader);
+    if (shader == nullptr) {
         throw ArgumentError();
     }
 
-    auto& shader = m_shaders[material.shader];
-    if (shader.vertex_shader == nullptr || shader.pixel_shader == nullptr) {
-        throw ArgumentError();
-    }
+    assert(shader->vertex_shader != nullptr);
+    assert(shader->pixel_shader != nullptr);
 
     const auto dynamic_variables =
-        determine_dynamic_material_variables(shader, material.properties);
+        determine_dynamic_material_variables(*shader, material_desc.properties);
 
     GraphicsPipelineStateCreateInfo ci;
     ci.PSODesc.PipelineType                          = PIPELINE_TYPE_GRAPHICS;
@@ -336,25 +321,25 @@ MaterialId Renderer::create_material(const khepri::renderer::Material& material)
     ci.GraphicsPipeline.RTVFormats[0]                = m_swapchain->GetDesc().ColorBufferFormat;
     ci.GraphicsPipeline.DSVFormat                    = m_swapchain->GetDesc().DepthBufferFormat;
     ci.GraphicsPipeline.DepthStencilDesc.DepthEnable = true;
-    ci.GraphicsPipeline.RasterizerDesc.CullMode      = to_cull_mode(material.cull_mode);
+    ci.GraphicsPipeline.RasterizerDesc.CullMode      = to_cull_mode(material_desc.cull_mode);
 
     constexpr auto                                 num_layout_elements = 5;
     std::array<LayoutElement, num_layout_elements> layout{
-        LayoutElement{0, 0, 3, VT_FLOAT32, false, offsetof(Mesh::Vertex, position),
-                      sizeof(Mesh::Vertex)},
-        LayoutElement{1, 0, 3, VT_FLOAT32, false, offsetof(Mesh::Vertex, normal),
-                      sizeof(Mesh::Vertex)},
-        LayoutElement{2, 0, 3, VT_FLOAT32, false, offsetof(Mesh::Vertex, tangent),
-                      sizeof(Mesh::Vertex)},
-        LayoutElement{3, 0, 3, VT_FLOAT32, false, offsetof(Mesh::Vertex, binormal),
-                      sizeof(Mesh::Vertex)},
-        LayoutElement{4, 0, 2, VT_FLOAT32, false, offsetof(Mesh::Vertex, uv),
-                      sizeof(Mesh::Vertex)}};
+        LayoutElement{0, 0, 3, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, position),
+                      sizeof(MeshDesc::Vertex)},
+        LayoutElement{1, 0, 3, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, normal),
+                      sizeof(MeshDesc::Vertex)},
+        LayoutElement{2, 0, 3, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, tangent),
+                      sizeof(MeshDesc::Vertex)},
+        LayoutElement{3, 0, 3, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, binormal),
+                      sizeof(MeshDesc::Vertex)},
+        LayoutElement{4, 0, 2, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, uv),
+                      sizeof(MeshDesc::Vertex)}};
     ci.GraphicsPipeline.InputLayout.LayoutElements = layout.data();
     ci.GraphicsPipeline.InputLayout.NumElements    = static_cast<Uint32>(layout.size());
 
-    ci.pVS = shader.vertex_shader;
-    ci.pPS = shader.pixel_shader;
+    ci.pVS = shader->vertex_shader;
+    ci.pPS = shader->pixel_shader;
 
     // Mark all material properties as dynamic (the rest is static by default)
     std::vector<ShaderResourceVariableDesc> variables;
@@ -368,32 +353,35 @@ MaterialId Renderer::create_material(const khepri::renderer::Material& material)
     ci.PSODesc.ResourceLayout.Variables    = variables.data();
     ci.PSODesc.ResourceLayout.NumVariables = static_cast<Uint32>(variables.size());
 
-    MaterialData data;
-    m_device->CreateGraphicsPipelineState(ci, &data.pipeline);
+    auto material = std::make_unique<Material>();
+    m_device->CreateGraphicsPipelineState(ci, &material->pipeline);
 
     if (auto* var =
-            data.pipeline->GetStaticVariableByName(SHADER_TYPE_VERTEX, "InstanceConstants")) {
+            material->pipeline->GetStaticVariableByName(SHADER_TYPE_VERTEX, "InstanceConstants")) {
         var->Set(m_constants_instance);
     }
-    if (auto* var = data.pipeline->GetStaticVariableByName(SHADER_TYPE_VERTEX, "ViewConstants")) {
+    if (auto* var =
+            material->pipeline->GetStaticVariableByName(SHADER_TYPE_VERTEX, "ViewConstants")) {
         var->Set(m_constants_view);
     }
-    if (auto* var = data.pipeline->GetStaticVariableByName(SHADER_TYPE_PIXEL, "LinearSampler")) {
+    if (auto* var =
+            material->pipeline->GetStaticVariableByName(SHADER_TYPE_PIXEL, "LinearSampler")) {
         var->Set(m_linear_sampler);
     }
-    data.pipeline->CreateShaderResourceBinding(&data.shader_resource_binding, true);
+    material->pipeline->CreateShaderResourceBinding(&material->shader_resource_binding, true);
 
-    const auto& property_size = [](const Material::PropertyValue& value) -> Uint32 {
+    const auto& property_size = [](const MaterialDesc::PropertyValue& value) -> Uint32 {
         // Every type has its own size, except for textures, which don't take up space.
-        return std::visit(Overloaded{[&](const TextureId& /*texture_id*/) -> Uint32 { return 0; },
-                                     [&](const auto& value) -> Uint32 { return sizeof(value); }},
-                          value);
+        return std::visit(
+            Overloaded{[&](khepri::renderer::Texture* /*texture*/) -> Uint32 { return 0; },
+                       [&](const auto& value) -> Uint32 { return sizeof(value); }},
+            value);
     };
 
     Uint32 buffer_size = 0;
-    data.params.reserve(material.properties.size());
-    for (const auto& p : material.properties) {
-        data.params.push_back({p.name, p.default_value, buffer_size});
+    material->params.reserve(material_desc.properties.size());
+    for (const auto& p : material_desc.properties) {
+        material->params.push_back({p.name, p.default_value, buffer_size});
         buffer_size += property_size(p.default_value);
         // Align next parameter to 16 bytes
         constexpr auto param_alignment = 16;
@@ -408,42 +396,27 @@ MaterialId Renderer::create_material(const khepri::renderer::Material& material)
         desc.Usage          = USAGE_DYNAMIC;
         desc.BindFlags      = BIND_UNIFORM_BUFFER;
         desc.CPUAccessFlags = CPU_ACCESS_WRITE;
-        m_device->CreateBuffer(desc, nullptr, &data.param_buffer);
+        m_device->CreateBuffer(desc, nullptr, &material->param_buffer);
     }
-
-    auto it = std::find_if(m_materials.begin(), m_materials.end(),
-                           [](const auto& m) { return m.pipeline == nullptr; });
-    if (it == m_materials.end()) {
-        it = m_materials.emplace(m_materials.end());
-    }
-    *it = std::move(data);
-    return it - m_materials.begin();
+    return material;
 }
 
-void Renderer::destroy_material(MaterialId material_id)
+std::unique_ptr<Texture> Renderer::create_texture(const TextureDesc& texture_desc)
 {
-    if (material_id >= m_materials.size()) {
-        throw ArgumentError();
-    }
-    m_materials[material_id] = {};
-}
-
-TextureId Renderer::create_texture(const Texture& texture)
-{
-    TextureDesc desc;
-    desc.Type      = to_resource_dimension(texture.dimension(), texture.array_size() > 0);
-    desc.Width     = static_cast<Uint32>(texture.width());
-    desc.Height    = static_cast<Uint32>(texture.height());
-    desc.Format    = to_texture_format(texture.pixel_format());
-    desc.MipLevels = static_cast<Uint32>(texture.mip_levels());
+    Diligent::TextureDesc desc;
+    desc.Type      = to_resource_dimension(texture_desc.dimension(), texture_desc.array_size() > 0);
+    desc.Width     = static_cast<Uint32>(texture_desc.width());
+    desc.Height    = static_cast<Uint32>(texture_desc.height());
+    desc.Format    = to_texture_format(texture_desc.pixel_format());
+    desc.MipLevels = static_cast<Uint32>(texture_desc.mip_levels());
     desc.Usage     = USAGE_IMMUTABLE;
     desc.BindFlags = BIND_SHADER_RESOURCE;
 
-    const std::size_t array_size        = std::max<std::size_t>(1, texture.array_size());
-    const std::size_t subresource_count = array_size * texture.mip_levels();
+    const std::size_t array_size        = std::max<std::size_t>(1, texture_desc.array_size());
+    const std::size_t subresource_count = array_size * texture_desc.mip_levels();
 
-    if (texture.dimension() == TextureDimension::texture_3d) {
-        desc.Depth = static_cast<Uint32>(texture.depth()); // NOLINT - union access
+    if (texture_desc.dimension() == TextureDimension::texture_3d) {
+        desc.Depth = static_cast<Uint32>(texture_desc.depth()); // NOLINT - union access
     } else {
         desc.ArraySize = static_cast<Uint32>(array_size); // NOLINT - union access
     }
@@ -452,10 +425,10 @@ TextureId Renderer::create_texture(const Texture& texture)
 
     auto subresource = subresources.begin();
     for (std::size_t index = 0; index < array_size; ++index) {
-        for (std::size_t mip = 0; mip < texture.mip_levels(); ++mip, ++subresource) {
+        for (std::size_t mip = 0; mip < texture_desc.mip_levels(); ++mip, ++subresource) {
             assert(subresource != subresources.end());
-            const auto& src          = texture.subresource(texture.subresource_index(mip, index));
-            subresource->pData       = texture.data().data() + src.data_offset;
+            const auto& src = texture_desc.subresource(texture_desc.subresource_index(mip, index));
+            subresource->pData       = texture_desc.data().data() + src.data_offset;
             subresource->Stride      = static_cast<Uint32>(src.stride);
             subresource->DepthStride = static_cast<Uint32>(src.depth_stride);
         }
@@ -465,69 +438,39 @@ TextureId Renderer::create_texture(const Texture& texture)
     texdata.pSubResources   = subresources.data();
     texdata.NumSubresources = static_cast<Uint32>(subresources.size());
 
-    TextureData data;
-    m_device->CreateTexture(desc, &texdata, &data.texture);
-    data.shader_view = data.texture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
-
-    auto it = std::find_if(m_textures.begin(), m_textures.end(),
-                           [](const auto& t) { return t.texture == nullptr; });
-    if (it == m_textures.end()) {
-        it = m_textures.emplace(m_textures.end());
-    }
-    *it = std::move(data);
-    return it - m_textures.begin();
+    auto texture = std::make_unique<Texture>();
+    m_device->CreateTexture(desc, &texdata, &texture->texture);
+    texture->shader_view = texture->texture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
+    return texture;
 }
 
-void Renderer::destroy_texture(TextureId texture_id)
+std::unique_ptr<Mesh> Renderer::create_mesh(const MeshDesc& mesh_desc)
 {
-    if (texture_id >= m_textures.size()) {
-        throw ArgumentError();
-    }
-    m_textures[texture_id] = {};
-}
-
-MeshId Renderer::create_mesh(const Mesh& mesh)
-{
-    MeshData data;
-    data.index_count = static_cast<Mesh::Index>(mesh.indices.size());
+    auto mesh         = std::make_unique<Mesh>();
+    mesh->index_count = static_cast<Mesh::Index>(mesh_desc.indices.size());
 
     {
-        using Vertex = khepri::renderer::Mesh::Vertex;
-        BufferData bufdata{mesh.vertices.data(),
-                           static_cast<Uint32>(mesh.vertices.size() * sizeof(Vertex))};
+        using Vertex = khepri::renderer::MeshDesc::Vertex;
+        BufferData bufdata{mesh_desc.vertices.data(),
+                           static_cast<Uint32>(mesh_desc.vertices.size() * sizeof(Vertex))};
         BufferDesc desc;
         desc.Size      = bufdata.DataSize;
         desc.BindFlags = BIND_VERTEX_BUFFER;
         desc.Usage     = USAGE_IMMUTABLE;
-        m_device->CreateBuffer(desc, &bufdata, &data.vertex_buffer);
+        m_device->CreateBuffer(desc, &bufdata, &mesh->vertex_buffer);
     }
 
     {
-        BufferData bufdata{mesh.indices.data(),
-                           static_cast<Uint32>(mesh.indices.size() * sizeof(Mesh::Index))};
+        BufferData bufdata{mesh_desc.indices.data(),
+                           static_cast<Uint32>(mesh_desc.indices.size() * sizeof(MeshDesc::Index))};
         BufferDesc desc;
         desc.Size      = bufdata.DataSize;
         desc.BindFlags = BIND_INDEX_BUFFER;
         desc.Usage     = USAGE_IMMUTABLE;
-        m_device->CreateBuffer(desc, &bufdata, &data.index_buffer);
+        m_device->CreateBuffer(desc, &bufdata, &mesh->index_buffer);
     }
 
-    auto it = std::find_if(m_meshes.begin(), m_meshes.end(), [](const auto& m) {
-        return m.index_count == 0 && m.vertex_buffer == nullptr && m.index_buffer == nullptr;
-    });
-    if (it == m_meshes.end()) {
-        it = m_meshes.emplace(m_meshes.end());
-    }
-    *it = std::move(data);
-    return it - m_meshes.begin();
-}
-
-void Renderer::destroy_mesh(MeshId mesh_id)
-{
-    if (mesh_id >= m_meshes.size()) {
-        throw ArgumentError();
-    }
-    m_meshes[mesh_id] = {};
+    return mesh;
 }
 
 void Renderer::clear()
@@ -548,7 +491,7 @@ void Renderer::present()
     m_swapchain->Present();
 }
 
-void Renderer::apply_material_params(MaterialData&                        material,
+void Renderer::apply_material_params(Material&                            material,
                                      gsl::span<const MeshInstance::Param> params)
 {
     const auto& set_variable = [&](const char* name, IDeviceObject* object) {
@@ -574,17 +517,18 @@ void Renderer::apply_material_params(MaterialData&                        materi
         // NOLINTNEXTLINE - pointer arithmetic
         auto* param_data = static_cast<std::uint8_t*>(map_helper) + param.buffer_offset;
 
-        std::visit(
-            Overloaded{[&](const TextureId& texture_id) {
-                           if (texture_id < m_textures.size()) {
-                               set_variable(param.name.c_str(), m_textures[texture_id].shader_view);
-                           }
-                       },
-                       [&](const auto& value) {
-                           // NOLINTNEXTLINE - reinterpret_cast
-                           *reinterpret_cast<std::decay_t<decltype(value)>*>(param_data) = value;
-                       }},
-            value);
+        std::visit(Overloaded{[&](Texture* texture) {
+                                  if (texture != nullptr) {
+                                      set_variable(param.name.c_str(),
+                                                   static_cast<Texture*>(texture)->shader_view);
+                                  }
+                              },
+                              [&](const auto& value) {
+                                  // NOLINTNEXTLINE - reinterpret_cast
+                                  *reinterpret_cast<std::decay_t<decltype(value)>*>(param_data) =
+                                      value;
+                              }},
+                   value);
     }
 
     set_variable("Material", material.param_buffer);
@@ -592,12 +536,6 @@ void Renderer::apply_material_params(MaterialData&                        materi
 
 void Renderer::render_meshes(gsl::span<const MeshInstance> meshes, const Camera& camera)
 {
-    for (const auto& mesh : meshes) {
-        if (mesh.material_id >= m_materials.size() || mesh.mesh_id >= m_meshes.size()) {
-            throw ArgumentError();
-        }
-    }
-
     // Set the view-specific constants
     {
         MapHelper<ViewConstantBuffer> constants(m_context, m_constants_view, MAP_WRITE,
@@ -606,21 +544,24 @@ void Renderer::render_meshes(gsl::span<const MeshInstance> meshes, const Camera&
     }
 
     for (const auto& mesh_info : meshes) {
-        auto& material = m_materials[mesh_info.material_id];
-        auto& mesh     = m_meshes[mesh_info.mesh_id];
+        auto* const material = dynamic_cast<Material*>(mesh_info.material);
+        auto* const mesh     = dynamic_cast<Mesh*>(mesh_info.mesh);
+        if (material == nullptr || mesh == nullptr) {
+            throw ArgumentError();
+        }
 
-        m_context->SetPipelineState(material.pipeline);
+        m_context->SetPipelineState(material->pipeline);
 
-        apply_material_params(material, mesh_info.material_params);
+        apply_material_params(*material, mesh_info.material_params);
 
-        m_context->CommitShaderResources(material.shader_resource_binding,
+        m_context->CommitShaderResources(material->shader_resource_binding,
                                          RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
-        IBuffer* vertex_buffer = mesh.vertex_buffer.RawPtr();
+        IBuffer* vertex_buffer = mesh->vertex_buffer.RawPtr();
         m_context->SetVertexBuffers(0, 1, &vertex_buffer, nullptr,
                                     RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
                                     SET_VERTEX_BUFFERS_FLAG_RESET);
-        m_context->SetIndexBuffer(mesh.index_buffer, 0, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+        m_context->SetIndexBuffer(mesh->index_buffer, 0, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
         // Set instance-specific constants
         {
@@ -632,7 +573,7 @@ void Renderer::render_meshes(gsl::span<const MeshInstance> meshes, const Camera&
 
         static_assert(sizeof(Mesh::Index) == sizeof(std::uint16_t));
         DrawIndexedAttribs draw_attribs;
-        draw_attribs.NumIndices = mesh.index_count;
+        draw_attribs.NumIndices = mesh->index_count;
         draw_attribs.IndexType  = VT_UINT16;
 #ifndef NDEBUG
         draw_attribs.Flags = DRAW_FLAG_VERIFY_ALL;

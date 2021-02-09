@@ -18,22 +18,25 @@ class ShaderStreamFactory final
     class MemoryStream final : public Diligent::ObjectBase<Diligent::IFileStream>
     {
     public:
-        MemoryStream(Diligent::IReferenceCounters* pRefCounters, std::vector<std::uint8_t> data)
-            : Diligent::ObjectBase<Diligent::IFileStream>(pRefCounters), m_data(std::move(data))
+        MemoryStream(Diligent::IReferenceCounters* pRefCounters, ShaderDesc shader)
+            : Diligent::ObjectBase<Diligent::IFileStream>(pRefCounters), m_shader(std::move(shader))
         {}
 
         void DILIGENT_CALL_TYPE ReadBlob(Diligent::IDataBlob* data) override
         {
             assert(data != nullptr);
             assert(m_pos == 0);
-            data->Resize(m_data.size());
-            std::copy(m_data.begin(), m_data.end(), static_cast<uint8_t*>(data->GetDataPtr()));
+            const auto& source_data = m_shader.data();
+            data->Resize(source_data.size());
+            std::copy(source_data.begin(), source_data.end(),
+                      static_cast<uint8_t*>(data->GetDataPtr()));
         }
 
         bool DILIGENT_CALL_TYPE Read(void* data, size_t size) override
         {
-            auto read = std::min(m_data.size() - m_pos, size);
-            std::copy(&m_data[m_pos], &m_data[m_pos + read], static_cast<uint8_t*>(data));
+            const auto& source_data = m_shader.data();
+            auto        read        = std::min(source_data.size() - m_pos, size);
+            std::copy(&source_data[m_pos], &source_data[m_pos + read], static_cast<uint8_t*>(data));
             m_pos += read;
             return read == size;
         }
@@ -46,7 +49,7 @@ class ShaderStreamFactory final
 
         size_t DILIGENT_CALL_TYPE GetSize() override
         {
-            return m_data.size();
+            return m_shader.data().size();
         }
 
         bool DILIGENT_CALL_TYPE IsValid() override
@@ -58,13 +61,13 @@ class ShaderStreamFactory final
                                            Diligent::ObjectBase<Diligent::IFileStream>);
 
     private:
-        std::vector<std::uint8_t> m_data;
-        size_t                    m_pos = 0;
+        ShaderDesc m_shader;
+        size_t     m_pos = 0;
     };
 
 public:
     explicit ShaderStreamFactory(Diligent::IReferenceCounters* pRefCounters,
-                                 Renderer::FileLoader          loader)
+                                 Renderer::ShaderLoader        loader)
         : Diligent::ObjectBase<Diligent::IShaderSourceInputStreamFactory>(pRefCounters)
         , m_loader(std::move(loader))
     {}
@@ -80,8 +83,8 @@ public:
         Diligent::IFileStream** ppStream) final
     {
         assert(ppStream != nullptr);
-        auto data = m_loader(Name);
-        *ppStream = (data) ? Diligent::MakeNewRCObj<MemoryStream>()(std::move(*data)) : nullptr;
+        auto shader = m_loader(Name);
+        *ppStream = (shader) ? Diligent::MakeNewRCObj<MemoryStream>()(std::move(*shader)) : nullptr;
     }
 
     IMPLEMENT_QUERY_INTERFACE_IN_PLACE(
@@ -89,7 +92,7 @@ public:
         Diligent::ObjectBase<Diligent::IShaderSourceInputStreamFactory>);
 
 private:
-    Renderer::FileLoader m_loader;
+    Renderer::ShaderLoader m_loader;
 };
 
 } // namespace khepri::renderer::diligent
