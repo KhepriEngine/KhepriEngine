@@ -19,6 +19,13 @@ std::string uppercase(std::string_view str)
     return result;
 }
 
+bool case_insensitive_equals(std::string_view s1, std::string_view s2)
+{
+    return std::equal(
+        s1.begin(), s1.end(), s2.begin(), s2.end(),
+        [](unsigned char c1, unsigned char c2) { return std::tolower(c1) == std::tolower(c2); });
+}
+
 Tokenizer::Tokenizer(std::string_view input, std::string_view delimiters)
     : m_input(input), m_delimiters(delimiters), m_next(m_input.find_first_not_of(m_delimiters))
 {}

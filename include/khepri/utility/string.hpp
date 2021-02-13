@@ -20,6 +20,11 @@ std::string basename(std::string_view str);
 std::string uppercase(std::string_view str);
 
 /**
+ * Checks if two strings are equal, ignoring case.
+ */
+bool case_insensitive_equals(std::string_view s1, std::string_view s2);
+
+/**
  * Less-than comparator for case-insensitive comparisons on string-like objects.
  *
  * This comparator is a transparent comparator; it can be used instead of @c std::less<> in e.g.
