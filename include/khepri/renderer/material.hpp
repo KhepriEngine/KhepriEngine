@@ -1,5 +1,7 @@
 #pragma once
 
+#include "material_desc.hpp"
+
 #include <cstddef>
 
 namespace khepri::renderer {
@@ -15,6 +17,18 @@ namespace khepri::renderer {
 class Material
 {
 public:
+    /// Parameter value
+    using ParamValue = MaterialDesc::PropertyValue;
+
+    /// Parameter description
+    struct Param
+    {
+        /// Name of the parameter
+        std::string name;
+        /// Value of the parameter
+        ParamValue value{};
+    };
+
     Material()          = default;
     virtual ~Material() = default;
 

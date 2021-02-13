@@ -105,8 +105,8 @@ public:
     /**
      * Constructs the texture
      */
-    TextureDesc(TextureDimension dimension, std::size_t width, std::size_t height,
-                std::size_t depth_array_size, std::size_t mip_levels, PixelFormat pixel_format,
+    TextureDesc(TextureDimension dimension, unsigned long width, unsigned long height,
+                unsigned long depth_array_size, unsigned long mip_levels, PixelFormat pixel_format,
                 std::vector<Subresource> subresources, std::vector<std::uint8_t> data)
         : m_dimension(dimension)
         , m_width(width)
@@ -138,7 +138,7 @@ public:
      *
      * The width will be at least 1.
      */
-    [[nodiscard]] std::size_t width() const noexcept
+    [[nodiscard]] unsigned long width() const noexcept
     {
         return m_width;
     }
@@ -149,7 +149,7 @@ public:
      * The height will be at least 1. If the texture dimension is #TextureDimension::texture_1d,
      * this will be exactly 1.
      */
-    [[nodiscard]] std::size_t height() const noexcept
+    [[nodiscard]] unsigned long height() const noexcept
     {
         return m_height;
     }
@@ -160,7 +160,7 @@ public:
      * The depth will be at least 1. Unless the texture dimension is #TextureDimension::texture_3d,
      * this will be exactly 1.
      */
-    [[nodiscard]] std::size_t depth() const noexcept
+    [[nodiscard]] unsigned long depth() const noexcept
     {
         return (m_dimension == TextureDimension::texture_3d) ? m_depth_array_size : 1;
     }
@@ -170,7 +170,7 @@ public:
      *
      * The number of mip levels will be at least 1.
      */
-    [[nodiscard]] std::size_t mip_levels() const noexcept
+    [[nodiscard]] unsigned long mip_levels() const noexcept
     {
         return m_mip_levels;
     }
@@ -182,7 +182,7 @@ public:
      * be texture arrays. If the texture is a cubemap, the returned array size is a multiple of 6,
      * so to get the "true" array size, divide the returned value by 6.
      */
-    [[nodiscard]] std::size_t array_size() const noexcept
+    [[nodiscard]] unsigned long array_size() const noexcept
     {
         return (m_dimension != TextureDimension::texture_3d) ? m_depth_array_size : 0;
     }
@@ -230,10 +230,10 @@ public:
 
 private:
     TextureDimension          m_dimension;
-    std::size_t               m_width;
-    std::size_t               m_height;
-    std::size_t               m_depth_array_size;
-    std::size_t               m_mip_levels;
+    unsigned long             m_width;
+    unsigned long             m_height;
+    unsigned long             m_depth_array_size;
+    unsigned long             m_mip_levels;
     PixelFormat               m_pixel_format;
     std::vector<Subresource>  m_subresources;
     std::vector<std::uint8_t> m_data;

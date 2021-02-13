@@ -59,7 +59,7 @@ public:
     create_mesh(const khepri::renderer::MeshDesc& mesh_desc) override;
 
     /// \see #khepri::renderer::Renderer::clear
-    void clear() override;
+    void clear(ClearFlags flags) override;
 
     /// \see #khepri::renderer::Renderer::present
     void present() override;
@@ -67,8 +67,21 @@ public:
     /// \see #khepri::renderer::Renderer::render_meshes
     void render_meshes(gsl::span<const MeshInstance> meshes, const Camera& camera) override;
 
+    /// \see #khepri::renderer::Renderer::render_sprites
+    void render_sprites(gsl::span<const Sprite> sprites, khepri::renderer::Material& material,
+                        gsl::span<const khepri::renderer::Material::Param> params) override;
+
 private:
-    void apply_material_params(Material& material, gsl::span<const MeshInstance::Param> params);
+    // Number of vertices to render one sprite
+    static constexpr std::size_t VERTICES_PER_SPRITE = 4;
+
+    // Number of sprites that fit in the sprite vertex/index buffers
+    static constexpr std::size_t SPRITE_BUFFER_COUNT = 1024;
+
+    using SpriteVertex = MeshDesc::Vertex;
+
+    void apply_material_params(Material&                                          material,
+                               gsl::span<const khepri::renderer::Material::Param> params);
 
     static std::vector<std::string>
     determine_dynamic_material_variables(const Shader&                              shader,
@@ -80,6 +93,8 @@ private:
     Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_constants_instance;
     Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_constants_view;
     Diligent::RefCntAutoPtr<Diligent::ISampler>       m_linear_sampler;
+    Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_sprite_vertex_buffer;
+    Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_sprite_index_buffer;
 };
 
 } // namespace khepri::renderer::diligent

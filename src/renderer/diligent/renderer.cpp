@@ -107,6 +107,9 @@ void diligent_debug_message_callback(DEBUG_MESSAGE_SEVERITY severity, const char
     }
 }
 
+constexpr auto TRIANGLES_PER_SPRITE  = 2;
+constexpr auto VERTICES_PER_TRIANGLE = 3;
+
 } // namespace
 
 struct Renderer::Shader : public khepri::renderer::Shader
@@ -141,6 +144,8 @@ struct Renderer::Material : public khepri::renderer::Material
 
 struct Renderer::Texture : public khepri::renderer::Texture
 {
+    using khepri::renderer::Texture::Texture;
+
     RefCntAutoPtr<ITexture> texture;
     ITextureView*           shader_view{};
 };
@@ -192,6 +197,43 @@ Renderer::Renderer(const NativeWindow& window)
         desc.AddressU  = TEXTURE_ADDRESS_WRAP;
         desc.AddressV  = TEXTURE_ADDRESS_WRAP;
         m_device->CreateSampler(desc, &m_linear_sampler);
+    }
+
+    // Create dynamic buffers for sprite rendering
+    {
+        BufferData buffer_data{};
+        BufferDesc desc;
+        desc.Size =
+            static_cast<Uint32>(SPRITE_BUFFER_COUNT * VERTICES_PER_SPRITE * sizeof(SpriteVertex));
+        desc.BindFlags      = BIND_VERTEX_BUFFER;
+        desc.Usage          = USAGE_DYNAMIC;
+        desc.CPUAccessFlags = CPU_ACCESS_WRITE;
+        m_device->CreateBuffer(desc, &buffer_data, &m_sprite_vertex_buffer);
+    }
+
+    {
+        std::vector<std::uint16_t> indices(SPRITE_BUFFER_COUNT * TRIANGLES_PER_SPRITE *
+                                           VERTICES_PER_TRIANGLE);
+        for (std::uint16_t i = 0, j = 0; i < SPRITE_BUFFER_COUNT;
+             i += VERTICES_PER_SPRITE, j += TRIANGLES_PER_SPRITE * VERTICES_PER_TRIANGLE) {
+            const auto triangle0   = j;
+            indices[triangle0 + 0] = i + 0;
+            indices[triangle0 + 1] = i + 2;
+            indices[triangle0 + 2] = i + 1;
+
+            const auto triangle1   = j + VERTICES_PER_TRIANGLE;
+            indices[triangle1 + 0] = i + 0;
+            indices[triangle1 + 1] = i + 3;
+            indices[triangle1 + 2] = i + 2;
+        }
+
+        BufferData bufdata{indices.data(),
+                           static_cast<Uint32>(indices.size() * sizeof(std::uint16_t))};
+        BufferDesc desc;
+        desc.Size      = bufdata.DataSize;
+        desc.BindFlags = BIND_INDEX_BUFFER;
+        desc.Usage     = USAGE_IMMUTABLE;
+        m_device->CreateBuffer(desc, &bufdata, &m_sprite_index_buffer);
     }
 }
 
@@ -440,7 +482,7 @@ std::unique_ptr<Texture> Renderer::create_texture(const TextureDesc& texture_des
     texdata.pSubResources   = subresources.data();
     texdata.NumSubresources = static_cast<Uint32>(subresources.size());
 
-    auto texture = std::make_unique<Texture>();
+    auto texture = std::make_unique<Texture>(Size{texture_desc.width(), texture_desc.height()});
     m_device->CreateTexture(desc, &texdata, &texture->texture);
     texture->shader_view = texture->texture->GetDefaultView(TEXTURE_VIEW_SHADER_RESOURCE);
     return texture;
@@ -475,17 +517,28 @@ std::unique_ptr<Mesh> Renderer::create_mesh(const MeshDesc& mesh_desc)
     return mesh;
 }
 
-void Renderer::clear()
+void Renderer::clear(ClearFlags flags)
 {
-    const std::array<float, 4> color{0, 0, 0, 1};
-
     auto* rtv = m_swapchain->GetCurrentBackBufferRTV();
     auto* dsv = m_swapchain->GetDepthBufferDSV();
 
     m_context->SetRenderTargets(1, &rtv, dsv, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-    m_context->ClearRenderTarget(rtv, color.data(), RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-    m_context->ClearDepthStencil(dsv, CLEAR_DEPTH_FLAG | CLEAR_STENCIL_FLAG, 1.0F, 0,
-                                 RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+    if ((flags & clear_rendertarget) != 0) {
+        std::array<float, 4> color = {0, 0, 0, 1};
+        m_context->ClearRenderTarget(rtv, color.data(), RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+    }
+
+    if ((flags & (clear_depth | clear_stencil)) != 0) {
+        CLEAR_DEPTH_STENCIL_FLAGS ctx_flags = CLEAR_DEPTH_FLAG_NONE;
+        if ((flags & clear_depth) != 0) {
+            ctx_flags |= CLEAR_DEPTH_FLAG;
+        }
+        if ((flags & clear_stencil) != 0) {
+            ctx_flags |= CLEAR_STENCIL_FLAG;
+        }
+        m_context->ClearDepthStencil(dsv, ctx_flags, 1.0F, 0,
+                                     RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+    }
 }
 
 void Renderer::present()
@@ -493,8 +546,8 @@ void Renderer::present()
     m_swapchain->Present();
 }
 
-void Renderer::apply_material_params(Material&                            material,
-                                     gsl::span<const MeshInstance::Param> params)
+void Renderer::apply_material_params(Material&                                          material,
+                                     gsl::span<const khepri::renderer::Material::Param> params)
 {
     const auto& set_variable = [&](const char* name, IDeviceObject* object) {
         auto& srb = *material.shader_resource_binding;
@@ -506,34 +559,35 @@ void Renderer::apply_material_params(Material&                            materi
         }
     };
 
-    MapHelper<std::uint8_t> map_helper(m_context, material.param_buffer, MAP_WRITE,
-                                       MAP_FLAG_DISCARD);
+    if (material.param_buffer != nullptr) {
+        MapHelper<std::uint8_t> map_helper(m_context, material.param_buffer, MAP_WRITE,
+                                           MAP_FLAG_DISCARD);
 
-    for (const auto& param : material.params) {
-        const auto* it = std::find_if(params.begin(), params.end(),
-                                      [&](const auto& p) { return p.name == param.name; });
+        for (const auto& param : material.params) {
+            // Use the value from the provided params if it exists, otherwise the material's default
+            const auto* const it = std::find_if(
+                params.begin(), params.end(), [&](const auto& p) { return p.name == param.name; });
+            const auto& value = (it != params.end()) ? it->value : param.default_value;
 
-        // Use the value from the provided params if it exists, otherwise the material's default
-        const auto& value = (it != params.end()) ? it->value : param.default_value;
+            // NOLINTNEXTLINE - pointer arithmetic
+            auto* param_data = static_cast<std::uint8_t*>(map_helper) + param.buffer_offset;
 
-        // NOLINTNEXTLINE - pointer arithmetic
-        auto* param_data = static_cast<std::uint8_t*>(map_helper) + param.buffer_offset;
+            std::visit(Overloaded{[&](khepri::renderer::Texture* value) {
+                                      auto* texture = dynamic_cast<Texture*>(value);
+                                      if (texture != nullptr) {
+                                          set_variable(param.name.c_str(), texture->shader_view);
+                                      }
+                                  },
+                                  [&](const auto& value) {
+                                      // NOLINTNEXTLINE - reinterpret_cast
+                                      *reinterpret_cast<std::decay_t<decltype(value)>*>(
+                                          param_data) = value;
+                                  }},
+                       value);
+        }
 
-        std::visit(Overloaded{[&](Texture* texture) {
-                                  if (texture != nullptr) {
-                                      set_variable(param.name.c_str(),
-                                                   static_cast<Texture*>(texture)->shader_view);
-                                  }
-                              },
-                              [&](const auto& value) {
-                                  // NOLINTNEXTLINE - reinterpret_cast
-                                  *reinterpret_cast<std::decay_t<decltype(value)>*>(param_data) =
-                                      value;
-                              }},
-                   value);
+        set_variable("Material", material.param_buffer);
     }
-
-    set_variable("Material", material.param_buffer);
 }
 
 void Renderer::render_meshes(gsl::span<const MeshInstance> meshes, const Camera& camera)
@@ -577,6 +631,70 @@ void Renderer::render_meshes(gsl::span<const MeshInstance> meshes, const Camera&
         DrawIndexedAttribs draw_attribs;
         draw_attribs.NumIndices = mesh->index_count;
         draw_attribs.IndexType  = VT_UINT16;
+#ifndef NDEBUG
+        draw_attribs.Flags = DRAW_FLAG_VERIFY_ALL;
+#endif
+        m_context->DrawIndexed(draw_attribs);
+    }
+}
+
+void Renderer::render_sprites(gsl::span<const Sprite> sprites, khepri::renderer::Material& material,
+                              gsl::span<const khepri::renderer::Material::Param> params)
+{
+    auto* mat = dynamic_cast<Material*>(&material);
+    if (mat == nullptr) {
+        throw ArgumentError();
+    }
+
+    m_context->SetPipelineState(mat->pipeline);
+    apply_material_params(*mat, params);
+
+    m_context->CommitShaderResources(mat->shader_resource_binding,
+                                     RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+    std::size_t sprite_index = 0;
+    while (sprite_index < sprites.size()) {
+        const std::size_t sprites_left = sprites.size() - sprite_index;
+        const std::size_t sprite_count = std::min(sprites_left, SPRITE_BUFFER_COUNT);
+
+        {
+            // Copy the vertex data
+            MapHelper<SpriteVertex> vertices_map(m_context, m_sprite_vertex_buffer, MAP_WRITE,
+                                                 MAP_FLAG_DISCARD);
+
+            const auto vertices = gsl::span<SpriteVertex>(
+                vertices_map, m_sprite_vertex_buffer->GetDesc().Size / sizeof(SpriteVertex));
+
+            for (std::size_t i = 0; i < sprite_count * VERTICES_PER_SPRITE;
+                 i += VERTICES_PER_SPRITE, ++sprite_index) {
+                const auto& sprite = sprites[sprite_index];
+                vertices[i + 0].position =
+                    Vector3(sprite.position_top_left.x, sprite.position_top_left.y, 0);
+                vertices[i + 1].position =
+                    Vector3(sprite.position_bottom_right.x, sprite.position_top_left.y, 0);
+                vertices[i + 2].position =
+                    Vector3(sprite.position_bottom_right.x, sprite.position_bottom_right.y, 0);
+                vertices[i + 3].position =
+                    Vector3(sprite.position_top_left.x, sprite.position_bottom_right.y, 0);
+                vertices[i + 0].uv = Vector2(sprite.uv_top_left.x, sprite.uv_top_left.y);
+                vertices[i + 1].uv = Vector2(sprite.uv_bottom_right.x, sprite.uv_top_left.y);
+                vertices[i + 2].uv = Vector2(sprite.uv_bottom_right.x, sprite.uv_bottom_right.y);
+                vertices[i + 3].uv = Vector2(sprite.uv_top_left.x, sprite.uv_bottom_right.y);
+            }
+        }
+
+        m_context->SetVertexBuffers(0, 1, &m_sprite_vertex_buffer, nullptr,
+                                    RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
+                                    SET_VERTEX_BUFFERS_FLAG_RESET);
+
+        m_context->SetIndexBuffer(m_sprite_index_buffer, 0,
+                                  RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+        static_assert(sizeof(Mesh::Index) == sizeof(std::uint16_t));
+        DrawIndexedAttribs draw_attribs;
+        draw_attribs.NumIndices =
+            static_cast<Uint32>(sprite_count * TRIANGLES_PER_SPRITE * VERTICES_PER_TRIANGLE);
+        draw_attribs.IndexType = VT_UINT16;
 #ifndef NDEBUG
         draw_attribs.Flags = DRAW_FLAG_VERIFY_ALL;
 #endif
