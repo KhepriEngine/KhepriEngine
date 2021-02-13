@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cctype>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -47,6 +48,36 @@ public:
 
     /// Marks the comparator as a transparent comparator
     using is_transparent = std::bool_constant<true>;
+};
+
+/**
+ * Tokenizes a string
+ */
+class Tokenizer
+{
+public:
+    /**
+     * Constructs the tokenizer.
+     *
+     * Calling #next repeatedly on a tokenizer returns subsequent substrings such that the
+     * substrings are delimited by one or more of the specified delimiters.
+     *
+     * \param input the input string to tokenize
+     * \param delimiters the delimiters to tokenize on (default = all whitespace characters)
+     *
+     * \note the input strings are not copied, the caller must ensure they remain valid.
+     */
+    Tokenizer(std::string_view input, std::string_view delimiters = " \t\r\n\v\f");
+
+    /**
+     * Returns the next token from the input string, or std::none if there are no more tokens.
+     */
+    std::optional<std::string_view> next() noexcept;
+
+private:
+    std::string_view            m_input;
+    std::string_view            m_delimiters;
+    std::string_view::size_type m_next;
 };
 
 } // namespace khepri
