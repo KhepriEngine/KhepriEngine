@@ -45,27 +45,34 @@ enum class TextureDimension
 enum class PixelFormat
 {
     /**
+     * Four-component unsigned-normalized-integer format with 8 bits for R, G, B and A. Color data
+     * is in sRGB space.
+     */
+    r8g8b8a8_unorm_srgb,
+
+    /**
      * Four-component unsigned-normalized-integer block-compression format with 5 bits for R, 6 bits
      * for G, 5 bits for B, and 0 or 1 bit for A channel. The pixel data is encoded using 8 bytes
-     * per 4x4 block (4 bits per pixel) providing 1:8 compression ratio against RGBA8 format.
+     * per 4x4 block (4 bits per pixel) providing 1:8 compression ratio against RGBA8 format. Color
+     * data is in sRGB space.
      */
-    bc1_unorm,
+    bc1_unorm_srgb,
 
     /**
      * Four-component unsigned-normalized-integer block-compression format with 5 bits for R, 6 bits
      * for G, 5 bits for B, and 4 bits for low-coherent separate A channel. The pixel data is
      * encoded using 16 bytes per 4x4 block (8 bits per pixel) providing 1:4 compression ratio
-     * against RGBA8 format.
+     * against RGBA8 format. Color data is in sRGB space.
      */
-    bc2_unorm,
+    bc2_unorm_srgb,
 
     /**
      * Four-component unsigned-normalized-integer block-compression format with 5 bits for R, 6 bits
      * for G, 5 bits for B, and 8 bits for highly-coherent A channel. The pixel data is encoded
      * using 16 bytes per 4x4 block (8 bits per pixel) providing 1:4 compression ratio against RGBA8
-     * format.
+     * format. Color data is in sRGB space.
      */
-    bc3_unorm,
+    bc3_unorm_srgb,
 };
 
 /**

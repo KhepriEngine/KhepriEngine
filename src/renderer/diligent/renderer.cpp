@@ -68,12 +68,14 @@ RESOURCE_DIMENSION to_resource_dimension(TextureDimension dimension, bool is_arr
 TEXTURE_FORMAT to_texture_format(PixelFormat format)
 {
     switch (format) {
-    case PixelFormat::bc1_unorm:
-        return TEX_FORMAT_BC1_UNORM;
-    case PixelFormat::bc2_unorm:
-        return TEX_FORMAT_BC2_UNORM;
-    case PixelFormat::bc3_unorm:
-        return TEX_FORMAT_BC3_UNORM;
+    case PixelFormat::r8g8b8a8_unorm_srgb:
+        return TEX_FORMAT_RGBA8_UNORM_SRGB;
+    case PixelFormat::bc1_unorm_srgb:
+        return TEX_FORMAT_BC1_UNORM_SRGB;
+    case PixelFormat::bc2_unorm_srgb:
+        return TEX_FORMAT_BC2_UNORM_SRGB;
+    case PixelFormat::bc3_unorm_srgb:
+        return TEX_FORMAT_BC3_UNORM_SRGB;
     }
     assert(false);
     return TEX_FORMAT_UNKNOWN;

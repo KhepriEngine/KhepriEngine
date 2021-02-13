@@ -23,6 +23,8 @@ add_library(${PROJECT_NAME}
     src/physics/collision_mesh.cpp
     src/renderer/io/kmf.cpp
     src/renderer/io/texture.cpp
+    src/renderer/io/texture_dds.cpp
+    src/renderer/io/texture_tga.cpp
     src/renderer/io/shader.cpp
     src/renderer/camera.cpp
     src/renderer/model.cpp
