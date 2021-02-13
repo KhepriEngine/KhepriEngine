@@ -360,7 +360,16 @@ Renderer::create_material(const khepri::renderer::MaterialDesc& material_desc)
         determine_dynamic_material_variables(*shader, material_desc.properties);
 
     GraphicsPipelineStateCreateInfo ci;
-    ci.PSODesc.PipelineType                          = PIPELINE_TYPE_GRAPHICS;
+    ci.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
+
+    if (material_desc.alpha_blend) {
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].BlendEnable = true;
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].SrcBlend    = BLEND_FACTOR_SRC_ALPHA;
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].DestBlend   = BLEND_FACTOR_INV_SRC_ALPHA;
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].BlendOp     = BLEND_OPERATION_ADD;
+    } else {
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].BlendEnable = false;
+    }
     ci.GraphicsPipeline.NumRenderTargets             = 1;
     ci.GraphicsPipeline.RTVFormats[0]                = m_swapchain->GetDesc().ColorBufferFormat;
     ci.GraphicsPipeline.DSVFormat                    = m_swapchain->GetDesc().DepthBufferFormat;
