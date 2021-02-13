@@ -52,7 +52,10 @@ struct MaterialDesc
     };
 
     /// Face culling mode of this material
-    CullMode cull_mode;
+    CullMode cull_mode{CullMode::none};
+
+    /// Enable alpha blending when rendering with this material
+    bool alpha_blend{false};
 
     /// Shader of this material
     Shader* shader{nullptr};
