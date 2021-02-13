@@ -57,6 +57,9 @@ struct MaterialDesc
     /// Enable alpha blending when rendering with this material
     bool alpha_blend{false};
 
+    /// Enable depth-buffer test when rendering this material
+    bool depth_enable{true};
+
     /// Shader of this material
     Shader* shader{nullptr};
 

@@ -373,7 +373,7 @@ Renderer::create_material(const khepri::renderer::MaterialDesc& material_desc)
     ci.GraphicsPipeline.NumRenderTargets             = 1;
     ci.GraphicsPipeline.RTVFormats[0]                = m_swapchain->GetDesc().ColorBufferFormat;
     ci.GraphicsPipeline.DSVFormat                    = m_swapchain->GetDesc().DepthBufferFormat;
-    ci.GraphicsPipeline.DepthStencilDesc.DepthEnable = true;
+    ci.GraphicsPipeline.DepthStencilDesc.DepthEnable = material_desc.depth_enable;
     ci.GraphicsPipeline.RasterizerDesc.CullMode      = to_cull_mode(material_desc.cull_mode);
 
     constexpr auto                                 num_layout_elements = 5;
