@@ -18,6 +18,8 @@ enum
     targa_image_rle = 8, // Run-length encoding modifier
 };
 
+constexpr auto MAX_ALPHA_8BPP = 255;
+
 struct Header
 {
     std::uint8_t  image_id_length;
@@ -155,10 +157,10 @@ TextureDesc load_texture_tga(khepri::io::Stream& stream)
             break;
         case 24:
             for (std::size_t x = 0, d = 0, s = 0; x < header.image_width; ++x, d += 4, s += 3) {
-                dest[d + 0] = src[s + 2]; // red
-                dest[d + 1] = src[s + 1]; // green
-                dest[d + 2] = src[s + 0]; // blue
-                dest[d + 3] = 255;        // alpha
+                dest[d + 0] = src[s + 2];     // red
+                dest[d + 1] = src[s + 1];     // green
+                dest[d + 2] = src[s + 0];     // blue
+                dest[d + 3] = MAX_ALPHA_8BPP; // alpha
             }
             break;
         default:

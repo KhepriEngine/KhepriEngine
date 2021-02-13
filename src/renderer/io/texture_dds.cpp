@@ -251,7 +251,7 @@ TextureDesc load_texture_dds(khepri::io::Stream& stream)
         throw khepri::io::InvalidFormatError();
     }
 
-    const size_t depth_array_size = (dimension == TextureDimension::texture_3d) ? depth : 0;
+    const unsigned long depth_array_size = (dimension == TextureDimension::texture_3d) ? depth : 0;
 
     return TextureDesc(dimension, width, height, depth_array_size, mip_levels, *format,
                        std::move(subresources), std::move(data));

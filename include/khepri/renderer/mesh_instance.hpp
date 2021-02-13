@@ -28,29 +28,17 @@ namespace khepri::renderer {
  */
 struct MeshInstance
 {
-    /// Parameter value
-    using ParamValue = MaterialDesc::PropertyValue;
-
-    /// Parameter description
-    struct Param
-    {
-        /// Name of the parameter
-        std::string name;
-        /// Value of the parameter
-        ParamValue value;
-    };
-
     /// The mesh this is an instance of
     Mesh* mesh{nullptr};
 
     /// The transformation matrix for this instance
     Matrix transform;
 
-    /// Tthe material to render this instance with
+    /// The material to render this instance with
     Material* material{nullptr};
 
     /// Material parameters for this instance
-    gsl::span<const Param> material_params;
+    gsl::span<Material::Param> material_params;
 };
 
 } // namespace khepri::renderer

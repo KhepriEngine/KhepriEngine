@@ -8,11 +8,13 @@
 #include "mesh_instance.hpp"
 #include "shader.hpp"
 #include "shader_desc.hpp"
+#include "sprite.hpp"
 #include "texture.hpp"
 #include "texture_desc.hpp"
 
 #include <khepri/math/matrix.hpp>
 #include <khepri/math/size.hpp>
+#include <khepri/utility/enum.hpp>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -33,6 +35,15 @@ namespace khepri::renderer {
 class Renderer
 {
 public:
+    /// Flags for #clear()
+    enum ClearFlags : int
+    {
+        clear_rendertarget = 1,
+        clear_depth        = 2,
+        clear_stencil      = 4,
+        clear_all          = clear_rendertarget | clear_depth | clear_stencil,
+    };
+
     /**
      * Callback used to load shaders on demand.
      * \param the path of the shader.
@@ -102,9 +113,11 @@ public:
     virtual std::unique_ptr<Mesh> create_mesh(const MeshDesc& mesh_desc) = 0;
 
     /**
-     * Clears the render target.
+     * Clears the render target and/or depth/stencil buffer
+     *
+     * \param[in] flags one or more OR'd flags from #ClearFlags
      */
-    virtual void clear() = 0;
+    virtual void clear(ClearFlags flags) = 0;
 
     /**
      * Presents all the rendered objects.
@@ -118,6 +131,16 @@ public:
      * \param[in] camera the camera to render them with.
      */
     virtual void render_meshes(gsl::span<const MeshInstance> meshes, const Camera& camera) = 0;
+
+    /**
+     * Renders a collection of sprites in camera-space
+     *
+     * \param[in] sprites a collection of sprites to render.
+     * \param[in] material the material to render the sprites with.
+     * \param[in] params the material parameters to render the sprites with.
+     */
+    virtual void render_sprites(gsl::span<const Sprite> sprites, Material& material,
+                                gsl::span<const Material::Param> params) = 0;
 };
 
 } // namespace khepri::renderer
