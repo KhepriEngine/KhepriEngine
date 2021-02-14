@@ -199,6 +199,17 @@ Renderer::Renderer(const NativeWindow& window)
         m_device->CreateSampler(desc, &m_linear_sampler);
     }
 
+    {
+        SamplerDesc desc;
+        desc.Name      = "LinearClampSampler";
+        desc.MinFilter = FILTER_TYPE_LINEAR;
+        desc.MagFilter = FILTER_TYPE_LINEAR;
+        desc.MipFilter = FILTER_TYPE_LINEAR;
+        desc.AddressU  = TEXTURE_ADDRESS_CLAMP;
+        desc.AddressV  = TEXTURE_ADDRESS_CLAMP;
+        m_device->CreateSampler(desc, &m_linear_clamp_sampler);
+    }
+
     // Create dynamic buffers for sprite rendering
     {
         BufferData buffer_data{};
@@ -283,6 +294,7 @@ std::vector<std::string> Renderer::determine_dynamic_material_variables(
         {"InstanceConstants", SHADER_RESOURCE_TYPE_CONSTANT_BUFFER},
         {"ViewConstants", SHADER_RESOURCE_TYPE_CONSTANT_BUFFER},
         {"LinearSampler", SHADER_RESOURCE_TYPE_SAMPLER},
+        {"LinearClampSampler", SHADER_RESOURCE_TYPE_SAMPLER},
         {"Material", SHADER_RESOURCE_TYPE_CONSTANT_BUFFER},
     };
 
@@ -420,6 +432,10 @@ Renderer::create_material(const khepri::renderer::MaterialDesc& material_desc)
     if (auto* var =
             material->pipeline->GetStaticVariableByName(SHADER_TYPE_PIXEL, "LinearSampler")) {
         var->Set(m_linear_sampler);
+    }
+    if (auto* var =
+            material->pipeline->GetStaticVariableByName(SHADER_TYPE_PIXEL, "LinearClampSampler")) {
+        var->Set(m_linear_clamp_sampler);
     }
     material->pipeline->CreateShaderResourceBinding(&material->shader_resource_binding, true);
 
