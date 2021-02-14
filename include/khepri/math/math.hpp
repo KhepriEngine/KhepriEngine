@@ -7,6 +7,19 @@ namespace khepri {
 static constexpr double PI = 3.1415926535897932384626433832795;
 
 /**
+ * \brief Linearly interpolates between \a v0 and \a v1 based on factor \a t.
+ *
+ * \a t is assumed to be between 0 and 1. If \a t is 0, \a v0 is returned. If \a t is 1, \a v1 is
+ * returned. It is valid for \a t to be outside of this range, in which case the result is an
+ * extrapolation.
+ */
+template <typename T>
+inline T lerp(const T& v0, const T& v1, float t) noexcept
+{
+    return T(v1 * t + v0 * (1.0f - t));
+}
+
+/**
  * \brief Clamps a value between two extremes
  *
  * Returns \a min if \a val < \a min.
