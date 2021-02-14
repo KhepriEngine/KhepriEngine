@@ -93,6 +93,7 @@ private:
     Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_constants_instance;
     Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_constants_view;
     Diligent::RefCntAutoPtr<Diligent::ISampler>       m_linear_sampler;
+    Diligent::RefCntAutoPtr<Diligent::ISampler>       m_linear_clamp_sampler;
     Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_sprite_vertex_buffer;
     Diligent::RefCntAutoPtr<Diligent::IBuffer>        m_sprite_index_buffer;
 };
