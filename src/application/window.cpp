@@ -9,8 +9,8 @@ namespace khepri::application {
 namespace {
 constexpr log::Logger LOG("window");
 
-constexpr auto WINDOW_WIDTH  = 640;
-constexpr auto WINDOW_HEIGHT = 480;
+constexpr auto WINDOW_WIDTH  = 1024;
+constexpr auto WINDOW_HEIGHT = 768;
 } // namespace
 
 Window::Window(const std::string& title)
