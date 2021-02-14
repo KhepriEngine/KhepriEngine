@@ -268,18 +268,6 @@ inline Vector3 normalize(const Vector3& v) noexcept
 inline Vector2::Vector2(const Vector3& v) noexcept : x(v.x), y(v.y) {}
 
 /**
- * \brief Linearly interpolates between vector \a v0 and vector \a v1 based on factor \a t.
- *
- * \a t is assumed to be between 0 and 1. If \a t is 0, \a v0 is returned. If \a t is 1, \a v1 is
- * returned. It is valid for \a t to be outside of this range, in which case the result is an
- * extrapolation.
- */
-inline Vector3 lerp(const Vector3& v0, const Vector3& v1, float t) noexcept
-{
-    return v1 * t + v0 * (1.0F - t);
-}
-
-/**
  * Checks if two vectors are colinear.
  *
  * Two vectors are colinear if they point in the same direction. Opposite vectors are also

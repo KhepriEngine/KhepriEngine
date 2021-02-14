@@ -250,16 +250,4 @@ inline Vector2 normalize(const Vector2& v) noexcept
     return Vector2(v.x * invL, v.y * invL);
 }
 
-/**
- * \brief Linearly interpolates between vector \a v0 and vector \a v1 based on factor \a t.
- *
- * \a t is assumed to be between 0 and 1. If \a t is 0, \a v0 is returned. If \a t is 1, \a v1 is
- * returned. It is valid for \a t to be outside of this range, in which case the result is an
- * extrapolation.
- */
-inline Vector2 lerp(const Vector2& v0, const Vector2& v1, float t) noexcept
-{
-    return v1 * t + v0 * (1.0F - t);
-}
-
 } // namespace khepri
