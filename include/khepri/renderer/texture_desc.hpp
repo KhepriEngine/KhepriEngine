@@ -49,6 +49,7 @@ enum class PixelFormat
      * is in sRGB space.
      */
     r8g8b8a8_unorm_srgb,
+    b8g8r8a8_unorm_srgb,
 
     /**
      * Four-component unsigned-normalized-integer block-compression format with 5 bits for R, 6 bits

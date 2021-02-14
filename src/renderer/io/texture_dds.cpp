@@ -73,6 +73,13 @@ void verify(bool condition)
     }
 }
 
+// Divides value by divisor, rounding the result up to the next integer
+template <typename T>
+constexpr T round_up(T value, T divisor)
+{
+    return (value + divisor - 1) / divisor;
+}
+
 constexpr std::uint32_t fourcc(char ch0, char ch1, char ch2, char ch3) noexcept
 {
     return (static_cast<std::uint32_t>(static_cast<std::uint8_t>(ch0)) << (BITS_PER_BYTE * 0)) |
@@ -83,7 +90,31 @@ constexpr std::uint32_t fourcc(char ch0, char ch1, char ch2, char ch3) noexcept
 
 std::optional<PixelFormat> pixel_format(const DdsPixelFormat& ddpf)
 {
-    if ((ddpf.flags & ddpf_fourcc) != 0) {
+    if ((ddpf.flags & ddpf_rgb) != 0) {
+        switch (ddpf.rgb_bitcount) {
+        case 32: {
+            constexpr auto RGBA_MASK_R = 0x000000ffUL;
+            constexpr auto RGBA_MASK_G = 0x0000ff00UL;
+            constexpr auto RGBA_MASK_B = 0x00ff0000UL;
+            constexpr auto RGBA_MASK_A = 0xff000000UL;
+
+            constexpr auto BGRA_MASK_R = 0x00ff0000UL;
+            constexpr auto BGRA_MASK_G = 0x0000ff00UL;
+            constexpr auto BGRA_MASK_B = 0x000000ffUL;
+            constexpr auto BGRA_MASK_A = 0xff000000UL;
+
+            if (ddpf.r_mask == RGBA_MASK_R && ddpf.g_mask == RGBA_MASK_G &&
+                ddpf.b_mask == RGBA_MASK_B && ddpf.a_mask == RGBA_MASK_A) {
+                return PixelFormat::r8g8b8a8_unorm_srgb;
+            }
+            if (ddpf.r_mask == BGRA_MASK_R && ddpf.g_mask == BGRA_MASK_G &&
+                ddpf.b_mask == BGRA_MASK_B && ddpf.a_mask == BGRA_MASK_A) {
+                return PixelFormat::b8g8r8a8_unorm_srgb;
+            }
+            break;
+        }
+        }
+    } else if ((ddpf.flags & ddpf_fourcc) != 0) {
         // Note: there is no distinction anymore between pre-multiplied and post-multiplied alpha,
         // so DXT2/3 and DXT4/5 are treated the same.
         switch (ddpf.fourcc) {
@@ -133,11 +164,20 @@ auto create_subresources(unsigned long width, unsigned long height, unsigned lon
             // Block compression
             auto bpe =
                 (pixel_format == PixelFormat::bc1_unorm_srgb) ? BITS_PER_BYTE : 2 * BITS_PER_BYTE;
-            auto blocks_w = (mip_width > 0) ? std::max(1UL, (mip_width + 3UL) / 4UL) : 0;
-            auto blocks_h = (mip_height > 0) ? std::max(1UL, (mip_height + 3UL) / 4UL) : 0;
+            auto blocks_w = (mip_width > 0) ? std::max(1UL, round_up(mip_width, 4UL)) : 0;
+            auto blocks_h = (mip_height > 0) ? std::max(1UL, round_up(mip_height, 4UL)) : 0;
 
             subresource.stride       = blocks_w * bpe;
             subresource.depth_stride = subresource.stride * blocks_h;
+            break;
+        }
+
+        case PixelFormat::b8g8r8a8_unorm_srgb:
+        case PixelFormat::r8g8b8a8_unorm_srgb: {
+            constexpr auto bpp = 32;
+
+            subresource.stride       = round_up(mip_width * bpp, 8UL); // Round up to nearest byte
+            subresource.depth_stride = subresource.stride * height;
             break;
         }
 
