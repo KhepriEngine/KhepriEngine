@@ -1,9 +1,11 @@
 #include <khepri/io/exceptions.hpp>
 #include <khepri/io/stream.hpp>
+#include <khepri/renderer/io/texture.hpp>
 #include <khepri/renderer/texture_desc.hpp>
 
 #include <cassert>
 #include <cstdint>
+#include <limits>
 
 namespace khepri::renderer::io {
 namespace {
@@ -59,6 +61,22 @@ Header read_header(khepri::io::Stream& stream)
     hdr.image_bpp        = stream.read_byte();
     hdr.image_descriptor = stream.read_byte();
     return hdr;
+}
+
+void write_header(khepri::io::Stream& stream, const Header& hdr)
+{
+    stream.write_byte(hdr.image_id_length);
+    stream.write_byte(hdr.color_map_type);
+    stream.write_byte(hdr.image_type);
+    stream.write_short(hdr.color_map_start);
+    stream.write_short(hdr.color_map_length);
+    stream.write_byte(hdr.color_map_bpp);
+    stream.write_short(hdr.image_x);
+    stream.write_short(hdr.image_y);
+    stream.write_short(hdr.image_width);
+    stream.write_short(hdr.image_height);
+    stream.write_byte(hdr.image_bpp);
+    stream.write_byte(hdr.image_descriptor);
 }
 
 bool is_valid_header(const Header& header)
@@ -174,6 +192,81 @@ TextureDesc load_texture_tga(khepri::io::Stream& stream)
 
     return TextureDesc(TextureDimension::texture_2d, header.image_width, header.image_height, 0, 1,
                        PixelFormat::r8g8b8a8_unorm_srgb, std::move(subresources), std::move(data));
+}
+
+void save_texture_tga(khepri::io::Stream& stream, const TextureDesc& texture_desc,
+                      const TextureSaveOptions& /*options*/)
+{
+    assert(stream.writable());
+
+    if (texture_desc.dimension() != TextureDimension::texture_2d ||
+        texture_desc.array_size() != 0) {
+        // Unsupported texture type for TARGA
+        throw ArgumentError();
+    }
+
+    const auto pf = texture_desc.pixel_format();
+    if (pf != PixelFormat::r8g8b8a8_unorm_srgb && pf != PixelFormat::b8g8r8a8_unorm_srgb) {
+        // Unsupported pixel format for TARGA
+        throw ArgumentError();
+    }
+
+    constexpr unsigned long max_size = std::numeric_limits<std::uint16_t>::max();
+    if (texture_desc.width() > max_size || texture_desc.height() > max_size) {
+        // Texture is too big
+        throw ArgumentError();
+    }
+
+    // Write the header
+    Header header{};
+    header.image_id_length  = 0;
+    header.color_map_type   = 0;
+    header.image_type       = targa_image_rgb;
+    header.color_map_start  = 0;
+    header.color_map_length = 0;
+    header.color_map_bpp    = 0;
+    header.image_x          = 0;
+    header.image_y          = 0;
+    header.image_width      = static_cast<std::uint16_t>(texture_desc.width());
+    header.image_height     = static_cast<std::uint16_t>(texture_desc.height());
+    header.image_bpp        = 32;
+    header.image_descriptor = 0;
+    write_header(stream, header);
+
+    std::vector<std::uint8_t> data(header.image_width * header.image_height * 4);
+
+    const auto& subresource = texture_desc.subresource(0);
+    for (std::size_t y = 1; y <= header.image_height; ++y) {
+        // Note: targa image data are stored upside-down (bottom scanline first)
+        const auto src = texture_desc.data().subspan(
+            subresource.data_offset + (header.image_height - y) * subresource.stride,
+            header.image_width);
+
+        // Note: 32bpp Targa is stored as b8g8r8a8
+        switch (pf) {
+        case PixelFormat::r8g8b8a8_unorm_srgb:
+            for (std::size_t x = 0, d = 0, s = 0; x < header.image_width; ++x, d += 4, s += 4) {
+                data[d + 0] = src[s + 2]; // blue
+                data[d + 1] = src[s + 1]; // green
+                data[d + 2] = src[s + 0]; // red
+                data[d + 3] = src[s + 3]; // alpha
+            }
+            break;
+
+        case PixelFormat::b8g8r8a8_unorm_srgb:
+            for (std::size_t x = 0, d = 0, s = 0; x < header.image_width; ++x, d += 4, s += 4) {
+                data[d + 0] = src[s + 0]; // red
+                data[d + 1] = src[s + 1]; // green
+                data[d + 2] = src[s + 2]; // blue
+                data[d + 3] = src[s + 3]; // alpha
+            }
+            break;
+        }
+    }
+
+    if (stream.write(data.data(), data.size()) != data.size()) {
+        throw khepri::io::Error("unable to write to stream");
+    }
 }
 
 } // namespace khepri::renderer::io

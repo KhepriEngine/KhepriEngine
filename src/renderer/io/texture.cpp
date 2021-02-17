@@ -10,6 +10,8 @@ extern TextureDesc load_texture_dds(khepri::io::Stream& stream);
 // TrueVision TGA
 extern bool        is_texture_tga(khepri::io::Stream& stream);
 extern TextureDesc load_texture_tga(khepri::io::Stream& stream);
+extern void        save_texture_tga(khepri::io::Stream& stream, const TextureDesc& texture_desc,
+                                    const TextureSaveOptions& options);
 
 namespace {
 
@@ -41,6 +43,22 @@ TextureDesc load_texture(khepri::io::Stream& stream)
         }
     }
     throw khepri::io::InvalidFormatError();
+}
+
+void save_texture(khepri::io::Stream& stream, const TextureDesc& texture_desc,
+                  const TextureSaveOptions& options)
+{
+    if (!stream.writable()) {
+        throw ArgumentError();
+    }
+
+    switch (options.format) {
+    case TextureFormat::targa:
+        save_texture_tga(stream, texture_desc, options);
+        break;
+    default:
+        throw ArgumentError();
+    }
 }
 
 } // namespace khepri::renderer::io
