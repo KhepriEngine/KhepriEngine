@@ -1,5 +1,7 @@
 #pragma once
 
+#include "math.hpp"
+
 #include <gsl/gsl-lite.hpp>
 
 #include <cassert>
@@ -22,16 +24,16 @@ public:
     component_type y{}; ///< The vector's Y element
 
     /// Constructs an uninitialized vector
-    Vector2() noexcept = default;
+    constexpr Vector2() noexcept = default;
 
     /// Constructs the vector from literal floats
-    Vector2(component_type fx, component_type fy) noexcept : x(fx), y(fy) {}
+    constexpr Vector2(component_type fx, component_type fy) noexcept : x(fx), y(fy) {}
 
     /// Constructs the vector from a vector3 by throwing away the Z component
-    explicit Vector2(const Vector3& v) noexcept;
+    explicit constexpr Vector2(const Vector3& v) noexcept;
 
     /// Constructs the vector from a vector4 by throwing away the Z and W components
-    explicit Vector2(const Vector4& v) noexcept;
+    explicit constexpr Vector2(const Vector4& v) noexcept;
 
     /// Adds vector \a v to the vector
     Vector2& operator+=(const Vector2& v) noexcept
@@ -248,6 +250,25 @@ inline Vector2 normalize(const Vector2& v) noexcept
 {
     float invL = 1.0F / v.length();
     return Vector2(v.x * invL, v.y * invL);
+}
+
+/**
+ * \brief Clamps each component of a vector between two extremes
+ *
+ * Returns \a min if \a val.{x,y} < \a min.
+ * Returns \a max if \a val.{x,y} > \a max.
+ * Otherwise, returns \a val.{x,y}.
+ *
+ * \param[in] val the vector to clamp
+ * \param[in] min the lower boundary to clamp against
+ * \param[in] max the upper boundary to clamp against
+ *
+ * \return \a val, with each component clamped between \a min and \a max.
+ */
+constexpr Vector2 clamp(const Vector2& val, Vector2::component_type min,
+                        Vector2::component_type max) noexcept
+{
+    return {clamp(val.x, min, max), clamp(val.y, min, max)};
 }
 
 } // namespace khepri

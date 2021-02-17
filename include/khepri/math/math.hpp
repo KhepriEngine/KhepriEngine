@@ -35,7 +35,6 @@ inline T lerp(const T& v0, const T& v1, float t) noexcept
 template <typename T>
 constexpr T clamp(const T& val, const T& min, const T& max) noexcept
 {
-    static_assert(std::is_floating_point_v<T>);
     return (val <= min) ? min : (val >= max) ? max : val;
 }
 
@@ -53,8 +52,7 @@ constexpr T clamp(const T& val, const T& min, const T& max) noexcept
 template <typename T>
 constexpr T saturate(const T& val) noexcept
 {
-    static_assert(std::is_floating_point_v<T>);
-    return clamp(val, T{0}, T{1});
+    return clamp(val, 0.0F, 1.0F);
 }
 
 /// Converts degrees to radians
