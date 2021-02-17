@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math.hpp"
 #include "vector3.hpp"
 
 #include <gsl/gsl-lite.hpp>
@@ -248,7 +249,27 @@ inline Vector4 normalize(const Vector4& v) noexcept
     return v / v.length();
 }
 
-inline Vector2::Vector2(const Vector4& v) noexcept : x(v.x), y(v.y) {}
-inline Vector3::Vector3(const Vector4& v) noexcept : x(v.x), y(v.y), z(v.z) {}
+inline constexpr Vector2::Vector2(const Vector4& v) noexcept : x(v.x), y(v.y) {}
+inline constexpr Vector3::Vector3(const Vector4& v) noexcept : x(v.x), y(v.y), z(v.z) {}
+
+/**
+ * \brief Clamps each component of a vector between two extremes
+ *
+ * Returns \a min if \a val.{x,y,z,w} < \a min.
+ * Returns \a max if \a val.{x,y,z,w} > \a max.
+ * Otherwise, returns \a val.{x,y,z,w}.
+ *
+ * \param[in] val the vector to clamp
+ * \param[in] min the lower boundary to clamp against
+ * \param[in] max the upper boundary to clamp against
+ *
+ * \return \a val, with each component clamped between \a min and \a max.
+ */
+constexpr Vector4 clamp(const Vector4& val, Vector4::component_type min,
+                        Vector4::component_type max) noexcept
+{
+    return {clamp(val.x, min, max), clamp(val.y, min, max), clamp(val.z, min, max),
+            clamp(val.w, min, max)};
+}
 
 } // namespace khepri

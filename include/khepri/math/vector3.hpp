@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math.hpp"
 #include "vector2.hpp"
 
 #include <gsl/gsl-lite.hpp>
@@ -26,17 +27,18 @@ public:
     component_type z{}; ///< The vector's Z element
 
     /// Constructs an uninitialized vector
-    Vector3() noexcept = default;
+    constexpr Vector3() noexcept = default;
 
     /// Constructs the vector from literals
-    Vector3(component_type fx, component_type fy, component_type fz) noexcept : x(fx), y(fy), z(fz)
+    constexpr Vector3(component_type fx, component_type fy, component_type fz) noexcept
+        : x(fx), y(fy), z(fz)
     {}
 
     /// Constructs the vector from a vector2, and a Z
-    Vector3(const Vector2& v, component_type fz) noexcept : x(v.x), y(v.y), z(fz) {}
+    constexpr Vector3(const Vector2& v, component_type fz) noexcept : x(v.x), y(v.y), z(fz) {}
 
     /// Constructs the vector from a Vector4 by throwing away the W component
-    explicit Vector3(const Vector4& v) noexcept;
+    explicit constexpr Vector3(const Vector4& v) noexcept;
 
     /// Adds vector \a v to the vector
     Vector3& operator+=(const Vector3& v) noexcept
@@ -265,7 +267,7 @@ inline Vector3 normalize(const Vector3& v) noexcept
     return nv;
 }
 
-inline Vector2::Vector2(const Vector3& v) noexcept : x(v.x), y(v.y) {}
+inline constexpr Vector2::Vector2(const Vector3& v) noexcept : x(v.x), y(v.y) {}
 
 /**
  * Checks if two vectors are colinear.
@@ -279,6 +281,25 @@ inline bool colinear(const Vector3& v1, const Vector3& v2) noexcept
 {
     constexpr auto max_colinear_sq_length = 0.000001;
     return cross(v1, v2).length_sq() < max_colinear_sq_length;
+}
+
+/**
+ * \brief Clamps each component of a vector between two extremes
+ *
+ * Returns \a min if \a val.{x,y,z} < \a min.
+ * Returns \a max if \a val.{x,y,z} > \a max.
+ * Otherwise, returns \a val.{x,y,z}.
+ *
+ * \param[in] val the vector to clamp
+ * \param[in] min the lower boundary to clamp against
+ * \param[in] max the upper boundary to clamp against
+ *
+ * \return \a val, with each component clamped between \a min and \a max.
+ */
+constexpr Vector3 clamp(const Vector3& val, Vector3::component_type min,
+                        Vector3::component_type max) noexcept
+{
+    return {clamp(val.x, min, max), clamp(val.y, min, max), clamp(val.z, min, max)};
 }
 
 } // namespace khepri
