@@ -7,6 +7,7 @@ project(Khepri CXX)
 # External libraries
 find_package(diligent-core REQUIRED)
 find_package(fmt REQUIRED)
+find_package(freetype REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(gsl-lite REQUIRED)
 
@@ -14,6 +15,10 @@ add_library(${PROJECT_NAME}
     src/application/application.cpp
     src/application/console_logger.cpp
     src/application/window.cpp
+    src/font/io/font_face.cpp
+    src/font/font_face_state.cpp
+    src/font/font_face.cpp
+    src/font/font.cpp
     src/io/container_stream.cpp
     src/io/file.cpp
     src/io/stream.cpp
@@ -56,6 +61,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
     fmt::fmt
+    Freetype::Freetype
     glfw::glfw
     gsl::gsl-lite
     diligent-core::diligent-core
