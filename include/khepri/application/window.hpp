@@ -1,5 +1,6 @@
 #pragma once
 
+#include <khepri/math/point.hpp>
 #include <khepri/math/size.hpp>
 
 #include <GLFW/glfw3.h>
@@ -20,8 +21,33 @@ namespace khepri::application {
 class Window final
 {
 public:
+    /// Identifies a mouse button
+    enum class MouseButton
+    {
+        /// The left mouse button
+        left,
+        /// The right mouse button
+        right
+    };
+
+    /// Identifies a mouse button action
+    enum class MouseButtonAction
+    {
+        /// The mouse button was pressed
+        pressed,
+        /// The mouse button was released
+        released
+    };
+
     /// Callback for "window size changed" events
     using SizeListener = std::function<void()>;
+
+    /// Callback for "cursor position changed" events
+    using CursorPositionListener = std::function<void(const khepri::Point& pos)>;
+
+    /// Callback for "mouse button" events
+    using MouseButtonListener =
+        std::function<void(const khepri::Point& pos, MouseButton, MouseButtonAction)>;
 
     /**
      * Constructs the window
@@ -62,6 +88,19 @@ public:
     void add_size_listener(const SizeListener& listener);
 
     /**
+     * Adds a listener for "cursor posiion changed" events.
+     * The cursor's position relative to the window's render area are passed along.
+     */
+    void add_cursor_position_listener(const CursorPositionListener& listener);
+
+    /**
+     * Adds a listener for "mouse button" events.
+     * The cursor's position relative to the window's render area, the mouse button, and the button
+     * action are passed along.
+     */
+    void add_mouse_button_listener(const MouseButtonListener& listener);
+
+    /**
      * \brief observer and handle new events on the process's event queue.
      *
      * Every process has a single event queue that all user input events are posted to.
@@ -72,9 +111,15 @@ public:
 
 private:
     static void framebuffer_size_changed(GLFWwindow* windoww, int width, int height);
+    static void cursor_position_callback(GLFWwindow* windoww, double xpos, double ypos);
+    static void mouse_button_callback(GLFWwindow* windoww, int button, int action, int mods);
 
-    GLFWwindow*               m_window;
-    std::vector<SizeListener> m_size_listeners;
+    GLFWwindow*                         m_window;
+    std::vector<SizeListener>           m_size_listeners;
+    std::vector<CursorPositionListener> m_cursor_position_listeners;
+    std::vector<MouseButtonListener>    m_mouse_button_listeners;
+
+    khepri::Point m_cursor_pos{0, 0};
 };
 
 } // namespace khepri::application
