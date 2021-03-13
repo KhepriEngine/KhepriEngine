@@ -293,8 +293,8 @@ public:
                 LOG.error("unable to initialize FreeType: {}", error);
                 throw FontError("unable to initialize FreeType");
             }
-            m_refcount++;
         }
+        m_refcount++;
         return m_handle;
     }
 
@@ -321,11 +321,10 @@ private:
 } // namespace
 
 FontFaceState::FontFaceState(const FontFaceDesc& font_face_desc)
-    : m_library(LibraryState::get().acquire())
+    : m_library(LibraryState::get().acquire()), m_data(font_face_desc.data())
 {
-    const auto& font_face_data = font_face_desc.data();
-    if (auto error = FT_New_Memory_Face(m_library, font_face_data.data(),
-                                        static_cast<FT_Long>(font_face_data.size()), 0, &m_face)) {
+    if (auto error = FT_New_Memory_Face(m_library, m_data.data(),
+                                        static_cast<FT_Long>(m_data.size()), 0, &m_face)) {
         LOG.error("unable to create font: {}", error);
         throw FontError("unable to create font");
     }
