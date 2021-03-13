@@ -28,8 +28,9 @@ public:
 private:
     FT_Library m_library;
 
-    mutable std::mutex m_mutex;
-    FT_Face            m_face{};
+    mutable std::mutex        m_mutex;
+    std::vector<std::uint8_t> m_data;
+    FT_Face                   m_face{};
 };
 
 } // namespace khepri::font::detail
