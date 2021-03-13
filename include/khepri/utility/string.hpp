@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cctype>
+#include <locale>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -39,18 +40,10 @@ bool case_insensitive_equals(std::string_view s1, std::string_view s2);
  *
  * @note This class cannot be used with character pointers or literals. Use a string or string_view,
  * instead.
+ * @note the case-insensitive comparison is locale-independent
  */
 class CaseInsensitiveLess
 {
-private:
-    struct NoCaseCompare
-    {
-        bool operator()(unsigned char c1, unsigned char c2) const
-        {
-            return std::tolower(c1) < std::tolower(c2);
-        }
-    };
-
 public:
     /// Checks if the first string-like argument is lexicographically less-than the second
     /// string-like argument
@@ -65,8 +58,15 @@ public:
         static_assert(!std::is_pointer_v<std::decay_t<U>>,
                       "U may not be a pointer or decay-to-pointer type");
 
+        using char_type = std::decay_t<decltype(*std::begin(t))>;
+        auto const& ct  = std::use_facet<std::ctype<char_type>>(std::locale::classic());
+
+        const auto& nocase_compare = [&](char_type c1, char_type c2) {
+            return ct.tolower(c1) < ct.tolower(c2);
+        };
+
         return std::lexicographical_compare(std::begin(t), std::end(t), std::begin(u), std::end(u),
-                                            NoCaseCompare());
+                                            nocase_compare);
     }
 
     /// Marks the comparator as a transparent comparator
