@@ -29,6 +29,9 @@ bool case_insensitive_equals(std::string_view s1, std::string_view s2);
  *
  * This comparator is a transparent comparator; it can be used instead of @c std::less<> in e.g.
  * @c std::map to avoid the requirement that the key and lookup types are the same.
+ *
+ * @note This class cannot be used with character pointers or literals. Use a string or string_view,
+ * instead.
  */
 class CaseInsensitiveLess
 {
@@ -47,6 +50,14 @@ public:
     template <typename T, typename U>
     bool operator()(T&& t, U&& u) const
     {
+        // Do not allow T or U to be character strings or literals.
+        // Character pointers do not have std::begin/std::end and character literals's length
+        // includes their null terminators, which std::end will include.
+        static_assert(!std::is_pointer_v<std::decay_t<T>>,
+                      "T may not be a pointer or decay-to-pointer type");
+        static_assert(!std::is_pointer_v<std::decay_t<U>>,
+                      "U may not be a pointer or decay-to-pointer type");
+
         return std::lexicographical_compare(std::begin(t), std::end(t), std::begin(u), std::end(u),
                                             NoCaseCompare());
     }
