@@ -20,6 +20,13 @@ std::string basename(std::string_view str);
 std::string uppercase(std::string_view str);
 
 /**
+ * Returns the trimmed view of a string.
+ *
+ * Trimmed strings have spaces at the start and end removed.
+ */
+std::string_view trim(std::string_view str);
+
+/**
  * Checks if two strings are equal, ignoring case.
  */
 bool case_insensitive_equals(std::string_view s1, std::string_view s2);

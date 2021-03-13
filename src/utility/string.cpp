@@ -1,6 +1,7 @@
 #include <khepri/utility/string.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <filesystem>
 
@@ -17,6 +18,19 @@ std::string uppercase(std::string_view str)
     std::transform(str.begin(), str.end(), result.begin(),
                    [](unsigned char ch) { return toupper(ch); });
     return result;
+}
+
+std::string_view trim(std::string_view str)
+{
+    static constexpr auto spaces = "\t\n\v\f\r ";
+
+    const auto start = str.find_first_not_of(spaces);
+    if (start == std::string_view::npos) {
+        return "";
+    }
+    auto end = str.find_last_not_of(spaces);
+    assert(end != std::string_view::npos);
+    return str.substr(start, end + 1 - start);
 }
 
 bool case_insensitive_equals(std::string_view s1, std::string_view s2)
