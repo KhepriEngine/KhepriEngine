@@ -24,4 +24,14 @@ public:
     Point(component_type x, component_type y) noexcept : x(x), y(y) {}
 };
 
+inline constexpr bool operator==(const Point& p1, const Point& p2) noexcept
+{
+    return p1.x == p2.x && p1.y == p2.y;
+}
+
+inline constexpr bool operator!=(const Point& p1, const Point& p2) noexcept
+{
+    return !(p1 == p2);
+}
+
 } // namespace khepri
