@@ -33,11 +33,12 @@ std::string_view trim(std::string_view str)
     return str.substr(start, end + 1 - start);
 }
 
-bool case_insensitive_equals(std::string_view s1, std::string_view s2)
+bool case_insensitive_equals(std::string_view s1, std::string_view s2) noexcept
 {
-    return std::equal(
-        s1.begin(), s1.end(), s2.begin(), s2.end(),
-        [](unsigned char c1, unsigned char c2) { return std::tolower(c1) == std::tolower(c2); });
+    using char_type = std::string_view::value_type;
+    auto const& ct  = std::use_facet<std::ctype<char_type>>(std::locale::classic());
+    return std::equal(std::begin(s1), std::end(s1), std::begin(s2), std::end(s2),
+                      [&](char_type c1, char_type c2) { return ct.tolower(c1) == ct.tolower(c2); });
 }
 
 Tokenizer::Tokenizer(std::string_view input, std::string_view delimiters)
