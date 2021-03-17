@@ -3,6 +3,7 @@
 #include <khepri/font/exceptions.hpp>
 #include <khepri/log/log.hpp>
 #include <khepri/math/bits.hpp>
+#include <khepri/math/color_srgb.hpp>
 #include <khepri/math/math.hpp>
 
 #include <mutex>
@@ -50,14 +51,6 @@ private:
     T m_object{nullptr};
 };
 
-std::uint8_t linear_to_srgb(float value)
-{
-    // pow(x, 1 / 2.2) is a good enough approximation to the linear-to-sRGB transformation
-    constexpr auto GAMMA = 1 / 2.2F;
-    return static_cast<std::uint8_t>(std::pow(value, GAMMA) *
-                                     std::numeric_limits<std::uint8_t>::max());
-}
-
 /**
  * Blend a 8bpp grayscale bitmap into 32bpp RGBA's alpha channel
  */
@@ -84,15 +77,13 @@ struct GradientDesc
     int color_top_y{};
 
     // Color of the top of the gradient.
-    // This color is in linear RGB space.
-    Vector3 color_top{};
+    khepri::ColorRGB color_top{};
 
     // Bottom of the gradient, in pixels relative to the source bitmap
     int color_bottom_y{};
 
     // Color of the top of the gradient.
-    // This color is in linear RGB space.
-    Vector3 color_bottom{};
+    khepri::ColorRGB color_bottom;
 };
 
 using FTGlyphRef   = FTScoped<FT_Glyph, FT_Done_Glyph>;
@@ -147,11 +138,12 @@ std::uint8_t find_darkest_below(gsl::span<const std::uint8_t> src, unsigned int 
  */
 void blend_bitmap(gsl::span<const std::uint8_t> src, unsigned int width, unsigned int height,
                   unsigned int src_pitch, gsl::span<std::uint8_t> dest, unsigned int dest_pitch,
-                  const GradientDesc& gradient, const Vector3& dest_color, bool embossed)
+                  const GradientDesc& gradient, const ColorRGB& dest_color, bool embossed)
 {
     // How much to lighten or darken
-    constexpr float        emboss_factor = 0.25F;
-    constexpr unsigned int emboss_radius = 2;
+    constexpr float        darken_strength  = 0.5F;
+    constexpr float        lighten_strength = 0.25F;
+    constexpr unsigned int emboss_radius    = 2;
 
     const auto gradient_range_y = gradient.color_bottom_y - gradient.color_top_y;
 
@@ -175,12 +167,12 @@ void blend_bitmap(gsl::span<const std::uint8_t> src, unsigned int width, unsigne
                     // Edge detection works by finding the "darkest" source pixel above/below it.
                     const auto darkest_top =
                         find_darkest_above(src, src_pitch, x, y, emboss_radius);
-                    pixel -= Vector3(1, 1, 1) * emboss_factor *
-                             static_cast<float>(max_value - darkest_top) / max_value;
+                    pixel *= lerp(1.0f, darken_strength,
+                                  static_cast<float>(max_value - darkest_top) / max_value);
 
                     const auto darkest_btm =
                         find_darkest_below(src, src_pitch, height, x, y, emboss_radius);
-                    pixel += Vector3(1, 1, 1) * emboss_factor *
+                    pixel += ColorRGB(1, 1, 1) * lighten_strength *
                              static_cast<float>(max_value - darkest_btm) / max_value;
                 }
 
@@ -198,9 +190,10 @@ void blend_bitmap(gsl::span<const std::uint8_t> src, unsigned int width, unsigne
                 pixel = saturate(pixel * src_alpha + dst_color * (1 - src_alpha));
 
                 // Store as sRGB
-                dest[d + 0] = linear_to_srgb(pixel.x);
-                dest[d + 1] = linear_to_srgb(pixel.y);
-                dest[d + 2] = linear_to_srgb(pixel.z);
+                ColorSRGB srgb(pixel);
+                dest[d + 0] = srgb.r;
+                dest[d + 1] = srgb.g;
+                dest[d + 2] = srgb.b;
 
                 // Alphas are added together
                 dest[d + 3] = std::min<unsigned int>(dest[d + 3] + src_value, max_value);
@@ -390,7 +383,7 @@ TextRender FontFaceState::render(std::u16string_view text, const FontOptions& op
     // of the text bitmap, if the string does not use the full ascender/descender, or that the
     // bitmap may extend beyond these points if the font has glyphs that extend beyond the
     // ascender/descender lines.
-    const auto ascender_px = static_cast<FT_Long>(m_face->size->metrics.x_ppem) * m_face->ascender /
+    const auto ascender_px = static_cast<FT_Long>(m_face->size->metrics.y_ppem) * m_face->ascender /
                              m_face->units_per_EM;
     const auto descender_px = static_cast<FT_Long>(m_face->size->metrics.y_ppem) *
                               m_face->descender / m_face->units_per_EM;
@@ -437,10 +430,10 @@ TextRender FontFaceState::render(std::u16string_view text, const FontOptions& op
                 if (dst_row[d + 3] != 0) {
                     const float alpha = static_cast<float>(dst_row[d + 3]) /
                                         std::numeric_limits<std::uint8_t>::max();
-
-                    dst_row[d + 0] = linear_to_srgb(options.stroke_color.x * alpha);
-                    dst_row[d + 1] = linear_to_srgb(options.stroke_color.y * alpha);
-                    dst_row[d + 2] = linear_to_srgb(options.stroke_color.z * alpha);
+                    ColorSRGB srgb(options.stroke_color * alpha);
+                    dst_row[d + 0] = srgb.r;
+                    dst_row[d + 1] = srgb.g;
+                    dst_row[d + 2] = srgb.b;
                 }
             }
         }
