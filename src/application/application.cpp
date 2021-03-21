@@ -68,7 +68,27 @@ void print_native_exception(HANDLE hProcess, EXCEPTION_POINTERS* exc_ptrs)
         STACKFRAME frame{};
         while (StackWalk64(machine_type, hProcess, GetCurrentThread(), &frame, context, nullptr,
                            SymFunctionTableAccess64, SymGetModuleBase64, nullptr) != FALSE) {
-            LOG.error(" - {:#018x}", frame.AddrPC.Offset);
+            std::array<char, sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)> buffer{};
+            auto* pSymbol         = reinterpret_cast<SYMBOL_INFO*>(buffer.data()); // NOLINT
+            pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+            pSymbol->MaxNameLen   = MAX_SYM_NAME;
+
+            DWORD64         displacement = 0;
+            IMAGEHLP_LINE64 line;
+            line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+            if (SymFromAddr(hProcess, frame.AddrPC.Offset, &displacement, pSymbol) != FALSE) {
+                auto symbol_name = std::string_view(&pSymbol->Name[0], pSymbol->NameLen);
+                if (SymGetLineFromAddr64(hProcess, frame.AddrPC.Offset, nullptr, &line) != FALSE) {
+                    LOG.error(" - {:#018x} {} + {} ({}:{})", frame.AddrPC.Offset, symbol_name,
+                              displacement, line.FileName, line.LineNumber);
+                } else {
+                    LOG.error(" - {:#018x} {} + {}", frame.AddrPC.Offset, symbol_name,
+                              displacement);
+                }
+            } else {
+                LOG.error(" - {:#018x}", frame.AddrPC.Offset);
+            }
         }
 #endif
     }
@@ -88,6 +108,7 @@ void handle_native_exceptions(TCallable callable)
 
     HANDLE hProcess = GetCurrentProcess();
 #ifndef NDEBUG
+    SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS);
     SymInitialize(hProcess, nullptr, TRUE);
 #endif
     __try {
