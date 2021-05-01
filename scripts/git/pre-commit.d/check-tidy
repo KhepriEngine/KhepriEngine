@@ -1,0 +1,29 @@
+#!/bin/bash
+# Checks tidiness of all changed files and aborts commit if some are not tidy
+
+CLANG_TIDY=clang-tidy
+
+# Redirect output to stderr.
+exec 1>&2
+
+# clang-tidy needs a compile_commands.json
+GIT_REPO=$(git rev-parse --show-toplevel)
+COMPILE_COMMANDS=$(find $GIT_REPO -type f -name compile_commands.json -print -quit)
+if [ "$COMPILE_COMMANDS" = "" ]; then
+  echo "error: Could not find a compile_commands.json for clang-tidy in this repository."
+  echo "       Please run cmake with -DCMAKE_EXPORT_COMPILE_COMMANDS=ON."
+  exit 1
+fi
+
+GIT_FILES=$(git diff-index --cached --name-only HEAD | grep -iE "\.(cpp|cc|c|h|hpp)$")
+SOURCE_FILES=""
+for file in $GIT_FILES; do
+    if [ -f $file ]; then
+        SOURCE_FILES="$SOURCE_FILES $file"
+    fi
+done
+
+if [ "$SOURCE_FILES" != "" ]; then
+    $CLANG_TIDY -p "${COMPILE_COMMANDS}" -quiet $SOURCE_FILES
+    exit $?
+fi

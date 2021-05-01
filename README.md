@@ -11,6 +11,7 @@ Khepri requires:
 * [Git](https://git-scm.com/) 1.7 or newer.
 * [Doxygen](https://www.doxygen.nl/).
 * [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) 10.
+* [ClangTidy](https://clang.llvm.org/extra/clang-tidy/) 10.
 
 ## Getting Started
 
