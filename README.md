@@ -10,7 +10,7 @@ Khepri requires:
 * [Conan](https://conan.io/) 1.46 or newer.
 * [CMake](https://cmake.org/) 3.13 or newer.
 * [Doxygen](https://www.doxygen.nl/).
-* [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) 10.
+* [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) 12.
 * [ClangTidy](https://clang.llvm.org/extra/clang-tidy/) 10.
 
 ## Getting Started
