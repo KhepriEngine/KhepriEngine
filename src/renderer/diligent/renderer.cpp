@@ -586,33 +586,38 @@ void Renderer::apply_material_params(Material&                                  
         }
     };
 
+    std::optional<MapHelper<std::uint8_t>> map_helper;
     if (material.param_buffer != nullptr) {
-        MapHelper<std::uint8_t> map_helper(m_context, material.param_buffer, MAP_WRITE,
-                                           MAP_FLAG_DISCARD);
+        map_helper =
+            MapHelper<std::uint8_t>(m_context, material.param_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+    }
 
-        for (const auto& param : material.params) {
-            // Use the value from the provided params if it exists, otherwise the material's default
-            const auto* const it = std::find_if(
-                params.begin(), params.end(), [&](const auto& p) { return p.name == param.name; });
-            const auto& value = (it != params.end()) ? it->value : param.default_value;
+    for (const auto& param : material.params) {
+        // Use the value from the provided params if it exists, otherwise the material's default
+        const auto* const it    = std::find_if(params.begin(), params.end(),
+                                            [&](const auto& p) { return p.name == param.name; });
+        const auto&       value = (it != params.end()) ? it->value : param.default_value;
 
-            // NOLINTNEXTLINE - pointer arithmetic
-            auto* param_data = static_cast<std::uint8_t*>(map_helper) + param.buffer_offset;
-
-            std::visit(Overloaded{[&](khepri::renderer::Texture* value) {
-                                      auto* texture = dynamic_cast<Texture*>(value);
-                                      if (texture != nullptr) {
-                                          set_variable(param.name.c_str(), texture->shader_view);
-                                      }
-                                  },
-                                  [&](const auto& value) {
+        std::visit(Overloaded{[&](khepri::renderer::Texture* value) {
+                                  auto* texture = dynamic_cast<Texture*>(value);
+                                  if (texture != nullptr) {
+                                      set_variable(param.name.c_str(), texture->shader_view);
+                                  }
+                              },
+                              [&](const auto& value) {
+                                  if (map_helper) {
+                                      // NOLINTNEXTLINE - pointer arithmetic
+                                      auto* param_data = static_cast<std::uint8_t*>(*map_helper) +
+                                                         param.buffer_offset;
                                       // NOLINTNEXTLINE - reinterpret_cast
                                       *reinterpret_cast<std::decay_t<decltype(value)>*>(
                                           param_data) = value;
-                                  }},
-                       value);
-        }
+                                  }
+                              }},
+                   value);
+    }
 
+    if (material.param_buffer != nullptr) {
         set_variable("Material", material.param_buffer);
     }
 }
