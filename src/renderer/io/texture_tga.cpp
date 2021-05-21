@@ -159,14 +159,14 @@ TextureDesc load_texture_tga(khepri::io::Stream& stream)
     stream.read(raw_data.data(), raw_data.size());
 
     const gsl::span<std::uint8_t> src = raw_data;
-    for (std::size_t y = 1; y <= header.image_height; ++y) {
+    for (std::size_t y = 1, s = 0; y <= header.image_height; ++y) {
         // Note: targa image data are stored upside-down (bottom scanline first)
         auto dest = gsl::span<std::uint8_t>(
             &data[(header.image_height - y) * header.image_width * 4], header.image_width * 4);
 
         switch (header.image_bpp) {
         case 32:
-            for (std::size_t x = 0, d = 0, s = 0; x < header.image_width; ++x, d += 4, s += 4) {
+            for (std::size_t x = 0, d = 0; x < header.image_width; ++x, d += 4, s += 4) {
                 dest[d + 0] = src[s + 2]; // red
                 dest[d + 1] = src[s + 1]; // green
                 dest[d + 2] = src[s + 0]; // blue
@@ -174,7 +174,7 @@ TextureDesc load_texture_tga(khepri::io::Stream& stream)
             }
             break;
         case 24:
-            for (std::size_t x = 0, d = 0, s = 0; x < header.image_width; ++x, d += 4, s += 3) {
+            for (std::size_t x = 0, d = 0; x < header.image_width; ++x, d += 4, s += 3) {
                 dest[d + 0] = src[s + 2];     // red
                 dest[d + 1] = src[s + 1];     // green
                 dest[d + 2] = src[s + 0];     // blue
