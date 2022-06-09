@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Use Windows 2019 specifically to get VS2019, which allows downloading pre-built binaries from conan center, rather than rebuilding them in CI.
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        build_type: ['Debug','Release']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Conan
+        id: conan
+        uses: turtlebrowser/get-conan@v1.0
+
+      - name: Print Conan version
+        run: echo "Using Conan ${{ steps.conan.outputs.version }}"
+
+      - name: Create default Conan profile
+        run: conan profile new default --detect
+
+      - name: Build project in ${{ matrix.build_type }} mode
+        run: conan create . -s build_type=${{ matrix.build_type }}
