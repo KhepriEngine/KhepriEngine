@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.15)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -62,8 +62,8 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
     fmt::fmt
-    Freetype::Freetype
-    glfw::glfw
+    freetype
+    glfw
     gsl::gsl-lite
     diligent-core::diligent-core
 )
@@ -85,6 +85,8 @@ if(MSVC)
 endif()
 
 export(TARGETS ${PROJECT_NAME} NAMESPACE Khepri:: FILE KhepriTargets.cmake)
+
+include(GNUInstallDirs)
 
 install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME})
 install(DIRECTORY include/khepri DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
