@@ -1,5 +1,21 @@
 ---
-Checks:              '-*,bugprone-*,cert-*,clang-analyzer-*,concurrency-*,cppcoreguidelines-*,misc-*,modernize-*,performance-*,portability-*,readability-*,-misc-no-recursion,-modernize-use-trailing-return-type'
+Checks: '
+    -*,
+    bugprone-*,
+    cert-*,
+    clang-analyzer-*,
+    concurrency-*,
+    cppcoreguidelines-*,
+    misc-*,
+    -misc-no-recursion,
+    modernize-*,
+    -modernize-use-trailing-return-type,
+    performance-*,
+    portability-*,
+    readability-*,
+    -readability-identifier-length
+'
+
 HeaderFilterRegex:   'khepri/'
 
 CheckOptions:
