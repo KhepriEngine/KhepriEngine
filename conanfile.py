@@ -1,4 +1,5 @@
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, tools
+from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain
 import re
 
 class KhepriEngineConan(ConanFile):
@@ -33,12 +34,12 @@ class KhepriEngineConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    generators = "cmake_find_package"
+    generators = "CMakeDeps"
 
     requires = [
         ("assimp/[>=5.0 <6.0]"),
         ("cxxopts/[>=2.0 <3.0]"),
-        ("diligent-core/[>=2.5.2 <3.0]"),
+        ("diligent-core/2.5.1"),
         ("fmt/[>=6.0 <7.0]"),
         ("freetype/[>=2.0 <3.0]"),
         ("glfw/[>=3.0 <4.0]"),
@@ -51,18 +52,23 @@ class KhepriEngineConan(ConanFile):
 
     exports_sources = "CMakeLists.txt", "cmake/*", "include/*", "src/*", "tests/*", "tools/*"
 
-    def build(self):
-        cmake = CMake(self)
+    def layout(self):
+        cmake_layout(self)
 
+    def generate(self):
+        tc = CMakeToolchain(self)
         # Propagate version info into CMake
         version_info = self._parse_version(self.version)
         if version_info:
-            cmake.definitions['KHEPRI_VERSION_MAJOR'] = version_info['major']
-            cmake.definitions['KHEPRI_VERSION_MINOR'] = version_info['minor']
-            cmake.definitions['KHEPRI_VERSION_PATCH'] = version_info['patch']
-            cmake.definitions['KHEPRI_VERSION_COMMIT'] = version_info['commit']
-            cmake.definitions['KHEPRI_VERSION_CLEAN'] = str(version_info['clean']).lower()
+            tc.variables['KHEPRI_VERSION_MAJOR'] = version_info['major']
+            tc.variables['KHEPRI_VERSION_MINOR'] = version_info['minor']
+            tc.variables['KHEPRI_VERSION_PATCH'] = version_info['patch']
+            tc.variables['KHEPRI_VERSION_COMMIT'] = version_info['commit']
+            tc.variables['KHEPRI_VERSION_CLEAN'] = str(version_info['clean']).lower()
+        tc.generate()
 
+    def build(self):
+        cmake = CMake(self)
         cmake.configure()
         cmake.build()
         cmake.test()
