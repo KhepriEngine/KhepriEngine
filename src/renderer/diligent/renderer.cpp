@@ -6,7 +6,11 @@
 #include <khepri/renderer/diligent/renderer.hpp>
 
 #include <DebugOutput.h>
+#ifdef _MSC_VER
 #include <EngineFactoryD3D11.h>
+#else
+#include <EngineFactoryOpenGL.h>
+#endif
 #include <MapHelper.hpp>
 #include <Sampler.h>
 #include <Texture.h>
@@ -156,6 +160,7 @@ Renderer::Renderer(const NativeWindow& window)
 {
     SetDebugMessageCallback(diligent_debug_message_callback);
 
+#ifdef _MSC_VER
     auto* factory = GetEngineFactoryD3D11();
 
     EngineD3D11CreateInfo engine_ci;
@@ -168,6 +173,17 @@ Renderer::Renderer(const NativeWindow& window)
     FullScreenModeDesc fullscreenmode_desc;
     factory->CreateSwapChainD3D11(m_device, m_context, swapchain_desc, fullscreenmode_desc, window,
                                   &m_swapchain);
+#else
+    auto* factory = GetEngineFactoryOpenGL();
+
+    EngineGLCreateInfo engine_ci{};
+#ifndef NDEBUG
+    engine_ci.SetValidationLevel(VALIDATION_LEVEL_2);
+#endif
+    engine_ci.Window = window;
+    SwapChainDesc      swapchain_desc;
+    factory->CreateDeviceAndSwapChainGL(engine_ci, &m_device, &m_context, swapchain_desc, &m_swapchain);
+#endif
 
     // Create constants buffers for vertex shader
     {
