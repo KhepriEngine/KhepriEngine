@@ -1,7 +1,11 @@
 #include <khepri/application/window.hpp>
 #include <khepri/log/log.hpp>
 
+#ifdef _MSC_VER
 #define GLFW_EXPOSE_NATIVE_WIN32
+#else
+#define GLFW_EXPOSE_NATIVE_COCOA
+#endif
 #include <GLFW/glfw3native.h>
 #include <gsl/gsl-lite.hpp>
 
@@ -41,7 +45,11 @@ Window::~Window()
 
 void* Window::native_handle() const
 {
+#ifdef _MSC_VER
     return glfwGetWin32Window(m_window);
+#else
+    return glfwGetCocoaWindow(m_window);
+#endif
 }
 
 Size Window::render_size() const
