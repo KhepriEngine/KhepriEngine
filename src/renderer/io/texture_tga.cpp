@@ -141,12 +141,12 @@ TextureDesc load_texture_tga(khepri::io::Stream& stream)
     verify(header.image_bpp != 16);
 
     // Skip over the Image ID section
-    stream.seek(header.image_id_length, khepri::io::seek_origin::current);
+    stream.seek(header.image_id_length, khepri::io::SeekOrigin::current);
 
     // Skip the color map, if any; we don't support color mapped TGA files
     if (header.color_map_type != 0) {
         stream.seek(header.color_map_length * header.color_map_bpp / 8U,
-                    khepri::io::seek_origin::current);
+                    khepri::io::SeekOrigin::current);
     }
 
     // Read the image in B8G8R8A8 format

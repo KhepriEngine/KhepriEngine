@@ -11,9 +11,9 @@ namespace khepri::log {
 
 // Use steady_clock to avoid changes in system time from
 // messing up the log timestamps.
-using clock_t = std::chrono::steady_clock;
+using Clock = std::chrono::steady_clock;
 
-enum class severity
+enum class Severity
 {
     debug,
     info,
@@ -33,10 +33,10 @@ struct RecordView
     std::string_view logger;
 
     /// The time when the log record was created
-    clock_t::time_point timestamp;
+    Clock::time_point timestamp;
 
     /// The severity of the log record
-    severity severity;
+    Severity severity;
 
     /// The formatted message of the log record
     std::string_view message;
@@ -81,7 +81,7 @@ public:
     template <typename... TArgs>
     void debug(std::string_view format, TArgs&&... args) const
     {
-        log(severity::debug, format, std::forward<TArgs>(args)...);
+        log(Severity::debug, format, std::forward<TArgs>(args)...);
     }
 
     /**
@@ -92,7 +92,7 @@ public:
     template <typename... TArgs>
     void info(std::string_view format, TArgs&&... args) const
     {
-        log(severity::info, format, std::forward<TArgs>(args)...);
+        log(Severity::info, format, std::forward<TArgs>(args)...);
     }
 
     /**
@@ -103,7 +103,7 @@ public:
     template <typename... TArgs>
     void warning(std::string_view format, TArgs&&... args) const
     {
-        log(severity::warning, format, std::forward<TArgs>(args)...);
+        log(Severity::warning, format, std::forward<TArgs>(args)...);
     }
 
     /**
@@ -114,7 +114,7 @@ public:
     template <typename... TArgs>
     void error(std::string_view format, TArgs&&... args) const
     {
-        log(severity::error, format, std::forward<TArgs>(args)...);
+        log(Severity::error, format, std::forward<TArgs>(args)...);
     }
 
     /**
@@ -125,7 +125,7 @@ public:
     template <typename... TArgs>
     void critical(std::string_view format, TArgs&&... args) const
     {
-        log(severity::critical, format, std::forward<TArgs>(args)...);
+        log(Severity::critical, format, std::forward<TArgs>(args)...);
     }
 
     /**
@@ -135,10 +135,10 @@ public:
      * \param[in] args the formatted arguments
      */
     template <typename... TArgs>
-    void log(severity severity, std::string_view format, TArgs&&... args) const
+    void log(Severity severity, std::string_view format, TArgs&&... args) const
     {
         detail::log(
-            {m_name, clock_t::now(), severity, fmt::format(format, std::forward<TArgs>(args)...)});
+            {m_name, Clock::now(), severity, fmt::format(format, std::forward<TArgs>(args)...)});
     }
 
 private:

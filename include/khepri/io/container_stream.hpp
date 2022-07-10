@@ -15,7 +15,7 @@ class ContainerStream final : public Stream
 {
 public:
     /// Mode to open files in
-    enum class open_mode
+    enum class OpenMode
     {
         /// Open files in read-only mode
         read,
@@ -25,7 +25,7 @@ public:
     };
 
     /// Type describing content IDs
-    using content_type_id = std::uint32_t;
+    using ContentTypeId = std::uint32_t;
 
     /**
      * \brief Constructs a contrainer_stream
@@ -37,7 +37,7 @@ public:
      *                       specified content type.
      * \throw argument_error if the underlying stream does not support \a open_mode.
      */
-    ContainerStream(Stream& underlying_stream, content_type_id type_id, open_mode open_mode);
+    ContainerStream(Stream& underlying_stream, ContentTypeId type_id, OpenMode open_mode);
     ~ContainerStream() noexcept override = default;
 
     ContainerStream(const ContainerStream&) = delete;
@@ -54,13 +54,13 @@ public:
     /// \see stream::readable
     [[nodiscard]] bool readable() const noexcept override
     {
-        return m_underlying_stream != nullptr && m_open_mode == open_mode::read;
+        return m_underlying_stream != nullptr && m_open_mode == OpenMode::read;
     }
 
     /// \see stream::writable
     [[nodiscard]] bool writable() const noexcept override
     {
-        return m_underlying_stream != nullptr && m_open_mode == open_mode::write;
+        return m_underlying_stream != nullptr && m_open_mode == OpenMode::write;
     }
 
     /// \see stream::seekable
@@ -76,11 +76,11 @@ public:
     std::size_t write(const void* buffer, std::size_t count) override;
 
     /// \see stream::seek
-    long long seek(long long offset, seek_origin origin) override;
+    long long seek(long long offset, SeekOrigin origin) override;
 
 private:
     Stream*   m_underlying_stream;
-    open_mode m_open_mode;
+    OpenMode  m_open_mode;
     long long m_position{0};
 
     // For reading

@@ -18,29 +18,29 @@ class Vector4 final
 {
 public:
     /// The type of the vector's components
-    using component_type = float;
+    using ComponentType = float;
 
-    component_type x{}; ///< The vector's X element
-    component_type y{}; ///< The vector's Y element
-    component_type z{}; ///< The vector's Z element
-    component_type w{}; ///< The vector's W element
+    ComponentType x{}; ///< The vector's X element
+    ComponentType y{}; ///< The vector's Y element
+    ComponentType z{}; ///< The vector's Z element
+    ComponentType w{}; ///< The vector's W element
 
     /// Constructs an uninitialized vector
     constexpr Vector4() noexcept = default;
 
     /// Constructs the vector from literal floats
-    constexpr Vector4(component_type fx, component_type fy, component_type fz,
-                      component_type fw) noexcept
+    constexpr Vector4(ComponentType fx, ComponentType fy, ComponentType fz,
+                      ComponentType fw) noexcept
         : x(fx), y(fy), z(fz), w(fw)
     {}
 
     /// Constructs the vector from a vector2, and floats for Z and W
-    constexpr Vector4(const Vector2& v, component_type fz, component_type fw) noexcept
+    constexpr Vector4(const Vector2& v, ComponentType fz, ComponentType fw) noexcept
         : x(v.x), y(v.y), z(fz), w(fw)
     {}
 
     /// Constructs the vector from a vector3, and a float for W
-    constexpr Vector4(const Vector3& v, component_type fw) noexcept : x(v.x), y(v.y), z(v.z), w(fw)
+    constexpr Vector4(const Vector3& v, ComponentType fw) noexcept : x(v.x), y(v.y), z(v.z), w(fw)
     {}
 
     /// Adds vector \a v to the vector
@@ -64,7 +64,7 @@ public:
     }
 
     /// Scales the vector by scalar \a s
-    constexpr Vector4& operator*=(component_type s) noexcept
+    constexpr Vector4& operator*=(ComponentType s) noexcept
     {
         x *= s;
         y *= s;
@@ -74,7 +74,7 @@ public:
     }
 
     /// Scales the vector by scalar 1.0 / \a s
-    constexpr Vector4& operator/=(component_type s) noexcept
+    constexpr Vector4& operator/=(ComponentType s) noexcept
     {
         x /= s;
         y /= s;
@@ -88,10 +88,10 @@ public:
      *
      * \param[in] index the component index to return. 0 is X, 1 is Y, etc.
      */
-    constexpr const component_type& operator[](std::size_t index) const noexcept
+    constexpr const ComponentType& operator[](std::size_t index) const noexcept
     {
         assert(index < 4);
-        return gsl::span<const component_type>(&x, 4)[index];
+        return gsl::span<const ComponentType>(&x, 4)[index];
     }
 
     /**
@@ -99,14 +99,14 @@ public:
      *
      * \param[in] index the component index to return. 0 is X, 1 is Y, etc.
      */
-    constexpr component_type& operator[](std::size_t index) noexcept
+    constexpr ComponentType& operator[](std::size_t index) noexcept
     {
         assert(index < 4);
-        return gsl::span<component_type>(&x, 4)[index];
+        return gsl::span<ComponentType>(&x, 4)[index];
     }
 
     /// Calculates the length of the vector
-    [[nodiscard]] component_type length() const noexcept
+    [[nodiscard]] ComponentType length() const noexcept
     {
         return std::sqrt(length_sq());
     }
@@ -117,13 +117,13 @@ public:
      * Calculating the squared length (length*length) is a considerably faster operation so use it
      * whenever possible (e.g., when comparing lengths)
      */
-    [[nodiscard]] constexpr component_type length_sq() const noexcept
+    [[nodiscard]] constexpr ComponentType length_sq() const noexcept
     {
         return x * x + y * y + z * z + w * w;
     }
 
     /// Calculates the distance between the vector and vector \a v
-    [[nodiscard]] component_type distance(const Vector4& v) const noexcept
+    [[nodiscard]] ComponentType distance(const Vector4& v) const noexcept
     {
         const auto dx = v.x - x;
         const auto dy = v.y - y;
@@ -138,7 +138,7 @@ public:
      * Calculating the squared distance (distance*distance) is a considerably faster operation so
      * use it whenever possible (e.g., when comparing distances)
      */
-    [[nodiscard]] constexpr component_type distance_sq(const Vector4& v) const noexcept
+    [[nodiscard]] constexpr ComponentType distance_sq(const Vector4& v) const noexcept
     {
         const auto dx = v.x - x;
         const auto dy = v.y - y;
@@ -148,7 +148,7 @@ public:
     }
 
     /// Calculates the dot product between the vector and vector \a v
-    [[nodiscard]] constexpr component_type dot(const Vector4& v) const noexcept
+    [[nodiscard]] constexpr ComponentType dot(const Vector4& v) const noexcept
     {
         return x * v.x + y * v.y + z * v.z + w * v.w;
     }
@@ -156,7 +156,7 @@ public:
     /// Normalizes the vector
     void normalize() noexcept
     {
-        const component_type inv_length = 1.0F / length();
+        const ComponentType inv_length = 1.0F / length();
         x *= inv_length;
         y *= inv_length;
         z *= inv_length;
@@ -174,7 +174,7 @@ public:
 
 /// Validate that the vector has the expected size, because this type can be directly used in a
 /// mapping to graphics engine's memory.
-static_assert(sizeof(Vector4) == 4 * sizeof(Vector4::component_type),
+static_assert(sizeof(Vector4) == 4 * sizeof(Vector4::ComponentType),
               "Vector4 does not have the expected size");
 
 /// Negates vector \a v
@@ -265,8 +265,8 @@ inline constexpr Vector3::Vector3(const Vector4& v) noexcept : x(v.x), y(v.y), z
  *
  * \return \a val, with each component clamped between \a min and \a max.
  */
-constexpr Vector4 clamp(const Vector4& val, Vector4::component_type min,
-                        Vector4::component_type max) noexcept
+constexpr Vector4 clamp(const Vector4& val, Vector4::ComponentType min,
+                        Vector4::ComponentType max) noexcept
 {
     return {clamp(val.x, min, max), clamp(val.y, min, max), clamp(val.z, min, max),
             clamp(val.w, min, max)};

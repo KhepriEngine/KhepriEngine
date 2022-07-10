@@ -18,16 +18,16 @@ class Vector2 final
 {
 public:
     /// The type of the vector's components
-    using component_type = float;
+    using ComponentType = float;
 
-    component_type x{}; ///< The vector's X element
-    component_type y{}; ///< The vector's Y element
+    ComponentType x{}; ///< The vector's X element
+    ComponentType y{}; ///< The vector's Y element
 
     /// Constructs an uninitialized vector
     constexpr Vector2() noexcept = default;
 
     /// Constructs the vector from literal floats
-    constexpr Vector2(component_type fx, component_type fy) noexcept : x(fx), y(fy) {}
+    constexpr Vector2(ComponentType fx, ComponentType fy) noexcept : x(fx), y(fy) {}
 
     /// Constructs the vector from a vector3 by throwing away the Z component
     explicit constexpr Vector2(const Vector3& v) noexcept;
@@ -72,10 +72,10 @@ public:
      *
      * \param[in] index the component index to return. 0 is X, 1 is Y.
      */
-    const component_type& operator[](std::size_t index) const noexcept
+    const ComponentType& operator[](std::size_t index) const noexcept
     {
         assert(index < 2);
-        return gsl::span<const component_type>(&x, 2)[index];
+        return gsl::span<const ComponentType>(&x, 2)[index];
     }
 
     /**
@@ -83,14 +83,14 @@ public:
      *
      * \param[in] index the component index to return. 0 is X, 1 is Y.
      */
-    component_type& operator[](std::size_t index) noexcept
+    ComponentType& operator[](std::size_t index) noexcept
     {
         assert(index < 2);
-        return gsl::span<component_type>(&x, 2)[index];
+        return gsl::span<ComponentType>(&x, 2)[index];
     }
 
     /// Calculates the length of the vector
-    [[nodiscard]] component_type length() const noexcept
+    [[nodiscard]] ComponentType length() const noexcept
     {
         return sqrt(x * x + y * y);
     }
@@ -101,13 +101,13 @@ public:
      * Calculating the squared length (length*length) is a considerably faster operation so use it
      * whenever possible (e.g., when comparing lengths)
      */
-    [[nodiscard]] component_type length_sq() const noexcept
+    [[nodiscard]] ComponentType length_sq() const noexcept
     {
         return x * x + y * y;
     }
 
     /// Calculates the distance between the vector and vector \a v
-    [[nodiscard]] component_type distance(const Vector2& v) const noexcept
+    [[nodiscard]] ComponentType distance(const Vector2& v) const noexcept
     {
         const auto dx = v.x - x;
         const auto dy = v.y - y;
@@ -120,7 +120,7 @@ public:
      * Calculating the squared distance (distance*distance) is a considerably faster operation so
      * use it whenever possible (e.g., when comparing distances)
      */
-    [[nodiscard]] component_type distance_sq(const Vector2& v) const noexcept
+    [[nodiscard]] ComponentType distance_sq(const Vector2& v) const noexcept
     {
         const auto dx = v.x - x;
         const auto dy = v.y - y;
@@ -128,19 +128,19 @@ public:
     }
 
     /// Calculates the angle that the vector makes with the positive X axis
-    [[nodiscard]] component_type angle() const noexcept
+    [[nodiscard]] ComponentType angle() const noexcept
     {
         return atan2(y, x);
     }
 
     /// Calculates the dot product between the vector and vector \a v
-    [[nodiscard]] component_type dot(const Vector2& v) const noexcept
+    [[nodiscard]] ComponentType dot(const Vector2& v) const noexcept
     {
         return x * v.x + y * v.y;
     }
 
     /// Calculates the cross product between the vector and vector \a v
-    [[nodiscard]] component_type cross(const Vector2& v) const noexcept
+    [[nodiscard]] ComponentType cross(const Vector2& v) const noexcept
     {
         return x * v.y - y * v.x;
     }
@@ -148,7 +148,7 @@ public:
     /// Normalizes the vector
     void normalize() noexcept
     {
-        component_type inv_length = 1.0F / length();
+        ComponentType inv_length = 1.0F / length();
         x *= inv_length;
         y *= inv_length;
     }
@@ -170,7 +170,7 @@ public:
 
 /// Validate that the vector has the expected size, because this type can be directly used in a
 /// mapping to graphics engine's memory.
-static_assert(sizeof(Vector2) == 2 * sizeof(Vector2::component_type),
+static_assert(sizeof(Vector2) == 2 * sizeof(Vector2::ComponentType),
               "Vector2 does not have the expected size");
 
 /// Negates vector \a v
@@ -265,8 +265,8 @@ inline Vector2 normalize(const Vector2& v) noexcept
  *
  * \return \a val, with each component clamped between \a min and \a max.
  */
-constexpr Vector2 clamp(const Vector2& val, Vector2::component_type min,
-                        Vector2::component_type max) noexcept
+constexpr Vector2 clamp(const Vector2& val, Vector2::ComponentType min,
+                        Vector2::ComponentType max) noexcept
 {
     return {clamp(val.x, min, max), clamp(val.y, min, max)};
 }

@@ -4,7 +4,7 @@
 
 namespace khepri::io {
 
-enum class seek_origin
+enum class SeekOrigin
 {
     begin,   ///< Seek from the beginning of the file.
     current, ///< Seek from the current position in the file.
@@ -59,7 +59,7 @@ public:
      *
      * \return the new file position, from the start of the file
      */
-    virtual long long seek(long long offset, seek_origin origin) = 0;
+    virtual long long seek(long long offset, SeekOrigin origin) = 0;
 
     /// Reads a boolean (one byte) from the stream
     bool read_bool()

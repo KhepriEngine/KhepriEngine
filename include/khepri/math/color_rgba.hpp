@@ -20,31 +20,31 @@ class ColorRGBA final
 {
 public:
     /// The type of the color's components
-    using component_type = float;
+    using ComponentType = float;
 
     /// The red component of the color
-    component_type r{};
+    ComponentType r{};
 
     /// The green component of the color
-    component_type g{};
+    ComponentType g{};
 
     /// The blue component of the color
-    component_type b{};
+    ComponentType b{};
 
     /// The alpha component of the color
-    component_type a{};
+    ComponentType a{};
 
     /// Constructs an uninitialized ColorRGBA
     constexpr ColorRGBA() noexcept = default;
 
     /// Constructs the ColorRGBA from literals
-    constexpr ColorRGBA(component_type fr, component_type fg, component_type fb,
-                        component_type fa) noexcept
+    constexpr ColorRGBA(ComponentType fr, ComponentType fg, ComponentType fb,
+                        ComponentType fa) noexcept
         : r(fr), g(fg), b(fb), a(fa)
     {}
 
     /// Constructs the ColorRGBA from a ColorRGB, and a float for Alpha
-    constexpr ColorRGBA(const ColorRGB& c, component_type fa) noexcept
+    constexpr ColorRGBA(const ColorRGB& c, ComponentType fa) noexcept
         : r(c.r), g(c.g), b(c.b), a(fa)
     {}
 
@@ -69,7 +69,7 @@ public:
     }
 
     /// Scales the color by scalar \a s
-    ColorRGBA& operator*=(component_type s) noexcept
+    ColorRGBA& operator*=(ComponentType s) noexcept
     {
         r *= s;
         g *= s;
@@ -79,7 +79,7 @@ public:
     }
 
     /// Scales the color with scalar 1 / \a s
-    ColorRGBA& operator/=(component_type s) noexcept
+    ColorRGBA& operator/=(ComponentType s) noexcept
     {
         r /= s;
         g /= s;
@@ -89,17 +89,17 @@ public:
     }
 
     /// Indexes the color. 0 is Red, 1 is Green, etc
-    const component_type& operator[](int index) const noexcept
+    const ComponentType& operator[](int index) const noexcept
     {
         assert(index < 4);
-        return gsl::span<const component_type>(&r, 4)[index];
+        return gsl::span<const ComponentType>(&r, 4)[index];
     }
 
     /// Indexes the color. 0 is Red, 1 is Green, etc
-    component_type& operator[](int index) noexcept
+    ComponentType& operator[](int index) noexcept
     {
         assert(index < 4);
-        return gsl::span<component_type>(&r, 4)[index];
+        return gsl::span<ComponentType>(&r, 4)[index];
     }
 };
 #pragma pack(pop)
@@ -161,8 +161,8 @@ inline constexpr ColorRGB::ColorRGB(const ColorRGBA& c) noexcept : r(c.r), g(c.g
  *
  * \return \a val, with each component clamped between \a min and \a max.
  */
-constexpr ColorRGBA clamp(const ColorRGBA& col, ColorRGBA::component_type min,
-                          ColorRGBA::component_type max) noexcept
+constexpr ColorRGBA clamp(const ColorRGBA& col, ColorRGBA::ComponentType min,
+                          ColorRGBA::ComponentType max) noexcept
 {
     return {clamp(col.r, min, max), clamp(col.g, min, max), clamp(col.b, min, max),
             clamp(col.a, min, max)};

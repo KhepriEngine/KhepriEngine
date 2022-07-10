@@ -11,7 +11,7 @@
 namespace khepri::io {
 
 /// Modes for dealing with files
-enum class open_mode
+enum class OpenMode
 {
     read,       /// Opens an existing file for reading.
     read_write, /// Creates a new file for reading and writing.
@@ -20,13 +20,13 @@ enum class open_mode
 /// A file-based stream
 class File : public Stream
 {
-    using path   = std::filesystem::path;
-    using handle = FILE*;
+    using Path   = std::filesystem::path;
+    using Handle = FILE*;
 
 public:
     /// Opens a file for reading or reading and writing.
     /// \throws khepri::io::error if the file cannot be opened.
-    File(const path& path, open_mode mode);
+    File(const Path& path, OpenMode mode);
     ~File() override;
 
     File(const File&) = delete;
@@ -43,7 +43,7 @@ public:
     /// \see stream::writable
     [[nodiscard]] bool writable() const noexcept override
     {
-        return m_mode == open_mode::read_write;
+        return m_mode == OpenMode::read_write;
     }
 
     /// \see stream::seekable
@@ -59,11 +59,11 @@ public:
     size_t write(const void* buffer, size_t count) override;
 
     /// \see stream::seek
-    long long seek(long long offset, io::seek_origin origin) override;
+    long long seek(long long offset, io::SeekOrigin origin) override;
 
 private:
-    gsl::owner<handle> m_handle;
-    open_mode          m_mode;
+    gsl::owner<Handle> m_handle;
+    OpenMode           m_mode;
 };
 
 } // namespace khepri::io

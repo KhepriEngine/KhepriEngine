@@ -16,7 +16,7 @@ public:
     BaseLogger()
     {
         log::add_sink(this);
-        m_log_start = log::clock_t::now();
+        m_log_start = log::Clock::now();
     }
 
     BaseLogger(const BaseLogger&) = delete;
@@ -52,22 +52,22 @@ private:
         }
     }
 
-    static char get_char(log::severity severity) noexcept
+    static char get_char(log::Severity severity) noexcept
     {
         switch (severity) {
-        case log::severity::critical:
+        case log::Severity::critical:
             return 'C';
             break;
-        case log::severity::error:
+        case log::Severity::error:
             return 'E';
             break;
-        case log::severity::warning:
+        case log::Severity::warning:
             return 'W';
             break;
-        case log::severity::info:
+        case log::Severity::info:
             return 'I';
             break;
-        case log::severity::debug:
+        case log::Severity::debug:
             return 'D';
             break;
         }
@@ -75,7 +75,7 @@ private:
         return '?';
     }
 
-    log::clock_t::time_point m_log_start;
+    log::Clock::time_point m_log_start;
 };
 
 #ifdef _MSC_VER

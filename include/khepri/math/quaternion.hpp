@@ -19,18 +19,18 @@ class Quaternion final
 {
 public:
     /// The type of the quaternion's components
-    using component_type = float;
+    using ComponentType = float;
 
-    component_type x; ///< The quaternion's X element
-    component_type y; ///< The quaternion's Y element
-    component_type z; ///< The quaternion's Z element
-    component_type w; ///< The quaternion's W element
+    ComponentType x; ///< The quaternion's X element
+    ComponentType y; ///< The quaternion's Y element
+    ComponentType z; ///< The quaternion's Z element
+    ComponentType w; ///< The quaternion's W element
 
     /// Constructs an uninitialized quaternion
     Quaternion() noexcept = default;
 
     /// Constructs a quaternion from immediate floats
-    Quaternion(component_type fx, component_type fy, component_type fz, component_type fw) noexcept
+    Quaternion(ComponentType fx, ComponentType fy, ComponentType fz, ComponentType fw) noexcept
         : x(fx), y(fy), z(fz), w(fw)
     {}
 
@@ -61,14 +61,14 @@ public:
     }
 
     /// Scales the quaternion
-    Quaternion& operator*=(component_type s) noexcept
+    Quaternion& operator*=(ComponentType s) noexcept
     {
         x *= s, y *= s, z *= s, w *= s;
         return *this;
     }
 
     /// Scales the quaternion (inverted)
-    Quaternion& operator/=(component_type s) noexcept
+    Quaternion& operator/=(ComponentType s) noexcept
     {
         x /= s, y /= s, z /= s, w /= s;
         return *this;
@@ -121,7 +121,7 @@ public:
     /// Normalizes the quaternion
     void normalize() noexcept
     {
-        const component_type inv_length = component_type(1.0) / length();
+        const ComponentType inv_length = ComponentType(1.0) / length();
         x *= inv_length;
         y *= inv_length;
         z *= inv_length;
@@ -132,11 +132,11 @@ public:
     [[nodiscard]] bool normalized() const noexcept
     {
         constexpr auto max_normalized_length = 0.000001;
-        return abs(component_type(1.0) - length()) < max_normalized_length;
+        return abs(ComponentType(1.0) - length()) < max_normalized_length;
     }
 
     /// Calculates the length of the quaternion
-    [[nodiscard]] component_type length() const noexcept
+    [[nodiscard]] ComponentType length() const noexcept
     {
         return sqrt(x * x + y * y + z * z + w * w);
     }
@@ -146,13 +146,13 @@ public:
      \details Calculating the squared length (length*length) is a considerably faster operation
         so use it whenever possible (e.g., when comparing lengths)
      */
-    [[nodiscard]] component_type length_sq() const noexcept
+    [[nodiscard]] ComponentType length_sq() const noexcept
     {
         return x * x + y * y + z * z + w * w;
     }
 
     /// Calculates the dot product between this and the specified quaternion
-    [[nodiscard]] component_type dot(const Quaternion& v) const noexcept
+    [[nodiscard]] ComponentType dot(const Quaternion& v) const noexcept
     {
         return x * v.x + y * v.y + z * v.z + w * v.w;
     }
@@ -165,7 +165,7 @@ public:
      */
     static Quaternion
     from_axis_angle(const Vector3& axis, ///< [in] The axis to rotate around
-                    component_type angle ///< [in] The angle, in radians, to rotate around the axis
+                    ComponentType angle ///< [in] The angle, in radians, to rotate around the axis
                     ) noexcept;
 
     /**
@@ -173,9 +173,9 @@ public:
      *
      * The applied rotation order is: First rotation around X-axis, then Y-axis, then Z-axis.
      */
-    static Quaternion from_euler(component_type x, ///< [in] Rotation, in radians, around the X-axis
-                                 component_type y, ///< [in] Rotation, in radians, around the Y-axis
-                                 component_type z  ///< [in] Rotation, in radians, around the Z-axis
+    static Quaternion from_euler(ComponentType x, ///< [in] Rotation, in radians, around the X-axis
+                                 ComponentType y, ///< [in] Rotation, in radians, around the Y-axis
+                                 ComponentType z  ///< [in] Rotation, in radians, around the Z-axis
                                  ) noexcept;
 
     /// Identity quaternion
@@ -185,7 +185,7 @@ public:
 
 /// Validate that the vector has the expected size, because this type can be directly used in a
 /// mapping to graphics engine's memory.
-static_assert(sizeof(Quaternion) == 4 * sizeof(Quaternion::component_type),
+static_assert(sizeof(Quaternion) == 4 * sizeof(Quaternion::ComponentType),
               "Quaternion does not have the expected size");
 
 /// Adds quaternion \a q2 to quaternion \a q1
@@ -219,7 +219,7 @@ inline Quaternion operator/(const Quaternion& q, float s) noexcept
 }
 
 /// Computes the dot-product of quaternion \a q1 and quaternion \a q2
-inline Quaternion::component_type dot(const Quaternion& q1, const Quaternion& q2) noexcept
+inline Quaternion::ComponentType dot(const Quaternion& q1, const Quaternion& q2) noexcept
 {
     return q1.dot(q2);
 }

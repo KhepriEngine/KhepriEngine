@@ -17,17 +17,17 @@ size_t File::write(const void* buffer, size_t count)
     return std::fwrite(buffer, 1, count, m_handle);
 }
 
-long long File::seek(long long offset, seek_origin origin)
+long long File::seek(long long offset, SeekOrigin origin)
 {
     int whence = SEEK_SET;
     switch (origin) {
-    case seek_origin::begin:
+    case SeekOrigin::begin:
         whence = SEEK_SET;
         break;
-    case seek_origin::current:
+    case SeekOrigin::current:
         whence = SEEK_CUR;
         break;
-    case seek_origin::end:
+    case SeekOrigin::end:
         whence = SEEK_END;
         break;
     default:
@@ -42,15 +42,15 @@ long long File::seek(long long offset, seek_origin origin)
     return std::ftell(m_handle);
 }
 
-File::File(const path& path, open_mode mode) : m_mode(mode)
+File::File(const Path& path, OpenMode mode) : m_mode(mode)
 {
     const char* modestr = "";
     switch (mode) {
     default:
-    case open_mode::read:
+    case OpenMode::read:
         modestr = "rb";
         break;
-    case open_mode::read_write:
+    case OpenMode::read_write:
         modestr = "w+b";
         break;
     }

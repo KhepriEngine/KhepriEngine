@@ -22,7 +22,7 @@ class Matrix final
 
 public:
     /// The type of the matrix's components
-    using component_type = Vector4::component_type;
+    using ComponentType = Vector4::ComponentType;
 
     /// Constructs an uninitialized matrix
     Matrix() noexcept = default;
