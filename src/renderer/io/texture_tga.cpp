@@ -265,6 +265,11 @@ void save_texture_tga(khepri::io::Stream& stream, const TextureDesc& texture_des
                 data[d + 3] = src[s + 3]; // alpha
             }
             break;
+
+        default:
+            // The condition at the top of the function should prevent this
+            assert(false);
+            break;
         }
     }
 
