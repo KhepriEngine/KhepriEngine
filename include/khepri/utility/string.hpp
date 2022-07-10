@@ -60,10 +60,10 @@ public:
         static_assert(!std::is_pointer_v<std::decay_t<U>>,
                       "U may not be a pointer or decay-to-pointer type");
 
-        using char_type = std::decay_t<decltype(*std::begin(t))>;
-        auto const& ct  = std::use_facet<std::ctype<char_type>>(std::locale::classic());
+        using CharType = std::decay_t<decltype(*std::begin(t))>;
+        auto const& ct  = std::use_facet<std::ctype<CharType>>(std::locale::classic());
 
-        const auto& nocase_compare = [&](char_type c1, char_type c2) {
+        const auto& nocase_compare = [&](CharType c1, CharType c2) {
             return ct.tolower(c1) < ct.tolower(c2);
         };
 

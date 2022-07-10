@@ -25,10 +25,10 @@ void check_required(const cxxopts::ParseResult& result, const std::vector<std::s
 
 std::string read_file(const std::filesystem::path& path)
 {
-    khepri::io::File shader_file(path, khepri::io::open_mode::read);
+    khepri::io::File shader_file(path, khepri::io::OpenMode::read);
 
-    const auto size = shader_file.seek(0, khepri::io::seek_origin::end);
-    shader_file.seek(0, khepri::io::seek_origin::begin);
+    const auto size = shader_file.seek(0, khepri::io::SeekOrigin::end);
+    shader_file.seek(0, khepri::io::SeekOrigin::begin);
     std::vector<char> buffer(size);
     if (shader_file.read(buffer.data(), buffer.size()) != buffer.size()) {
         throw khepri::io::Error("unable to read stream");
@@ -47,9 +47,13 @@ int main(int argc, char* argv[])
         options.positional_help("INPUT OUTPUT");
 
         options.add_options()("h,help", "display this help and exit")(
-            "i,input", "Input file", cxxopts::value<std::filesystem::path>())(
-            "o,output", "Output file",
-            cxxopts::value<std::filesystem::path>())("V,version", "display the version and exit");
+            "i,input", "Input file",
+            cxxopts::value<
+                std::filesystem::path>())("o,output", "Output file",
+                                          cxxopts::value<
+                                              std::filesystem::
+                                                  path>())("V,version",
+                                                           "display the version and exit");
 
         options.parse_positional({"input", "output"});
         auto result = options.parse(argc, argv);
@@ -74,7 +78,7 @@ int main(int argc, char* argv[])
         const auto shader = khepri::renderer::Shader::compile(shader_source, input_path.string());
 
         // Write out the compiled shader
-        khepri::io::File output(output_path, khepri::io::open_mode::read_write);
+        khepri::io::File output(output_path, khepri::io::OpenMode::read_write);
         khepri::renderer::io::write_ksf(shader, output);
     } catch (const khepri::renderer::ShaderCompileError& e) {
         std::cerr << "error: " << e.what() << ":\n" << e.error_message() << "\n";

@@ -36,9 +36,9 @@ TextureDesc load_texture(khepri::io::Stream& stream)
         {{is_texture_dds, load_texture_dds}, {is_texture_tga, load_texture_tga}}};
     // Check each supported format
     for (const auto& format : formats) {
-        stream.seek(0, khepri::io::seek_origin::begin);
+        stream.seek(0, khepri::io::SeekOrigin::begin);
         if (format.check_func(stream)) {
-            stream.seek(0, khepri::io::seek_origin::begin);
+            stream.seek(0, khepri::io::SeekOrigin::begin);
             return format.load_func(stream);
         }
     }

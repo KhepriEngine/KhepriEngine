@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
         auto model = create_model(*scene);
 
         // Write out the model
-        khepri::io::File output(output_path, khepri::io::open_mode::read_write);
+        khepri::io::File output(output_path, khepri::io::OpenMode::read_write);
         khepri::renderer::io::write_kmf(model, output);
     } catch (const std::exception& e) {
         std::cerr << "error: " << e.what() << '\n';

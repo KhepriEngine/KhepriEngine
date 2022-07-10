@@ -25,22 +25,22 @@ class ColorSRGB final
 {
 public:
     /// The type of the color's components
-    using component_type = std::uint8_t;
+    using ComponentType = std::uint8_t;
 
     /// The red component of the color
-    component_type r{};
+    ComponentType r{};
 
     /// The green component of the color
-    component_type g{};
+    ComponentType g{};
 
     /// The blue component of the color
-    component_type b{};
+    ComponentType b{};
 
     /// Constructs an uninitialized ColorSRGB
     constexpr ColorSRGB() noexcept = default;
 
     /// Constructs the ColorSRGB from literals
-    constexpr ColorSRGB(component_type fr, component_type fg, component_type fb) noexcept
+    constexpr ColorSRGB(ComponentType fr, ComponentType fg, ComponentType fb) noexcept
         : r(fr), g(fg), b(fb)
     {}
 
@@ -50,26 +50,26 @@ public:
      * \note the components of the color are clamped to [0,1] before conversion.
      */
     explicit constexpr ColorSRGB(const ColorRGB& c) noexcept
-        : r(static_cast<component_type>(linear_to_srgb(saturate(c.r)) *
-                                        std::numeric_limits<ColorSRGB::component_type>::max()))
-        , g(static_cast<component_type>(linear_to_srgb(saturate(c.g)) *
-                                        std::numeric_limits<ColorSRGB::component_type>::max()))
-        , b(static_cast<component_type>(linear_to_srgb(saturate(c.b)) *
-                                        std::numeric_limits<ColorSRGB::component_type>::max()))
+        : r(static_cast<ComponentType>(linear_to_srgb(saturate(c.r)) *
+                                        std::numeric_limits<ColorSRGB::ComponentType>::max()))
+        , g(static_cast<ComponentType>(linear_to_srgb(saturate(c.g)) *
+                                        std::numeric_limits<ColorSRGB::ComponentType>::max()))
+        , b(static_cast<ComponentType>(linear_to_srgb(saturate(c.b)) *
+                                        std::numeric_limits<ColorSRGB::ComponentType>::max()))
     {}
 
     /// Indexes the color. 0 is Red, 1 is Green, etc
-    const component_type& operator[](int index) const noexcept
+    const ComponentType& operator[](int index) const noexcept
     {
         assert(index < 3);
-        return gsl::span<const component_type>(&r, 3)[index];
+        return gsl::span<const ComponentType>(&r, 3)[index];
     }
 
     /// Indexes the color. 0 is Red, 1 is Green, etc
-    component_type& operator[](int index) noexcept
+    ComponentType& operator[](int index) noexcept
     {
         assert(index < 3);
-        return gsl::span<component_type>(&r, 3)[index];
+        return gsl::span<ComponentType>(&r, 3)[index];
     }
 
     /**
@@ -100,11 +100,11 @@ public:
 
 inline constexpr ColorRGB::ColorRGB(const ColorSRGB& c) noexcept
     : r(ColorSRGB::srgb_to_linear(static_cast<float>(c.r) /
-                                  std::numeric_limits<ColorSRGB::component_type>::max()))
+                                  std::numeric_limits<ColorSRGB::ComponentType>::max()))
     , g(ColorSRGB::srgb_to_linear(static_cast<float>(c.g) /
-                                  std::numeric_limits<ColorSRGB::component_type>::max()))
+                                  std::numeric_limits<ColorSRGB::ComponentType>::max()))
     , b(ColorSRGB::srgb_to_linear(static_cast<float>(c.b) /
-                                  std::numeric_limits<ColorSRGB::component_type>::max()))
+                                  std::numeric_limits<ColorSRGB::ComponentType>::max()))
 {}
 
 } // namespace khepri

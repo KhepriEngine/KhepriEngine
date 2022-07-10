@@ -12,7 +12,7 @@ Camera::Matrices Camera::create_matrices(const Properties& properties) noexcept
     matrices.view =
         Matrix::create_look_at_view(properties.position, properties.target, properties.up);
     matrices.projection =
-        (properties.type == type::orthographic)
+        (properties.type == Type::orthographic)
             ? Matrix::create_orthographic_projection(properties.width, properties.aspect,
                                                      properties.znear, properties.zfar)
             : Matrix::create_perspective_projection(properties.fov, properties.aspect,

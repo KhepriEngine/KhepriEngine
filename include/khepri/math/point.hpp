@@ -9,19 +9,19 @@ class Point final
 {
 public:
     /// The type of the point's components
-    using component_type = long;
+    using ComponentType = long;
 
     /// The x coordinate of this point
-    component_type x;
+    ComponentType x;
 
     /// The y coordinate of this point
-    component_type y;
+    ComponentType y;
 
     /// Constructs an uninitialized point
     Point() noexcept = default;
 
     /// Constructs the point \a x and \a y.
-    Point(component_type x, component_type y) noexcept : x(x), y(y) {}
+    Point(ComponentType x, ComponentType y) noexcept : x(x), y(y) {}
 };
 
 inline constexpr bool operator==(const Point& p1, const Point& p2) noexcept

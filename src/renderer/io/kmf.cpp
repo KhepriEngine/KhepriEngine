@@ -14,7 +14,7 @@ namespace khepri::renderer::io {
 namespace {
 constexpr log::Logger LOG("kmf");
 
-constexpr khepri::io::ContainerStream::content_type_id CONTENT_ID_KMF = 0x3ea69ae9;
+constexpr khepri::io::ContainerStream::ContentTypeId CONTENT_ID_KMF = 0x3ea69ae9;
 
 void require(bool condition)
 {
@@ -31,10 +31,10 @@ ModelDesc load_kmf(khepri::io::Stream& stream)
     }
 
     khepri::io::ContainerStream container(stream, CONTENT_ID_KMF,
-                                          khepri::io::ContainerStream::open_mode::read);
+                                          khepri::io::ContainerStream::OpenMode::read);
 
-    auto size = container.seek(0, khepri::io::seek_origin::end);
-    container.seek(0, khepri::io::seek_origin::begin);
+    auto size = container.seek(0, khepri::io::SeekOrigin::end);
+    container.seek(0, khepri::io::SeekOrigin::begin);
     std::vector<std::uint8_t> buffer(size);
     if (container.read(buffer.data(), buffer.size()) != buffer.size()) {
         throw khepri::io::Error("unable to read stream");
@@ -55,7 +55,7 @@ void write_kmf(const ModelDesc& model, khepri::io::Stream& stream)
     }
 
     khepri::io::ContainerStream container(stream, CONTENT_ID_KMF,
-                                          khepri::io::ContainerStream::open_mode::write);
+                                          khepri::io::ContainerStream::OpenMode::write);
     khepri::io::Serializer      serializer;
     serializer.write(model);
     auto data = serializer.data();

@@ -24,11 +24,11 @@ void require(bool condition)
 }
 } // namespace
 
-ContainerStream::ContainerStream(Stream& underlying_stream, content_type_id type_id,
-                                 open_mode open_mode)
+ContainerStream::ContainerStream(Stream& underlying_stream, ContentTypeId type_id,
+                                 OpenMode open_mode)
     : m_underlying_stream(&underlying_stream), m_open_mode(open_mode)
 {
-    if (m_open_mode == open_mode::read) {
+    if (m_open_mode == OpenMode::read) {
         if (!underlying_stream.readable()) {
             throw ArgumentError();
         }
@@ -50,7 +50,7 @@ ContainerStream::ContainerStream(Stream& underlying_stream, content_type_id type
         m_content_size = underlying_stream.read_uint();
 
         if (underlying_stream.seekable()) {
-            m_content_start = underlying_stream.seek(0, seek_origin::current);
+            m_content_start = underlying_stream.seek(0, SeekOrigin::current);
         }
     } else {
         // When writing, we must be able to seek because we have to write
@@ -66,17 +66,17 @@ ContainerStream::ContainerStream(Stream& underlying_stream, content_type_id type
         underlying_stream.write_uint(0); // flags
         underlying_stream.write_uint(0); // size
 
-        m_content_start = underlying_stream.seek(0, seek_origin::current);
+        m_content_start = underlying_stream.seek(0, SeekOrigin::current);
     }
 }
 
 void ContainerStream::close()
 {
-    if (m_underlying_stream != nullptr && m_open_mode == open_mode::write) {
+    if (m_underlying_stream != nullptr && m_open_mode == OpenMode::write) {
         if (m_content_size <= std::numeric_limits<std::uint32_t>::max()) {
             const auto size_offset =
                 m_content_start - static_cast<long long>(sizeof(std::uint32_t));
-            m_underlying_stream->seek(size_offset, seek_origin::begin);
+            m_underlying_stream->seek(size_offset, SeekOrigin::begin);
             m_underlying_stream->write_uint(static_cast<std::uint32_t>(m_content_size));
         }
         m_underlying_stream = nullptr;
@@ -107,7 +107,7 @@ std::size_t ContainerStream::write(const void* buffer, std::size_t count)
     return written;
 }
 
-long long ContainerStream::seek(long long offset, seek_origin origin)
+long long ContainerStream::seek(long long offset, SeekOrigin origin)
 {
     if (!seekable()) {
         throw Error("container does not support seeking");
@@ -115,24 +115,24 @@ long long ContainerStream::seek(long long offset, seek_origin origin)
 
     long long position = 0;
     switch (origin) {
-    case seek_origin::begin:
+    case SeekOrigin::begin:
         offset   = std::max(0LL, std::min(m_content_size, offset));
-        position = m_underlying_stream->seek(m_content_start + offset, seek_origin::begin);
+        position = m_underlying_stream->seek(m_content_start + offset, SeekOrigin::begin);
         break;
 
-    case seek_origin::current:
-        position = m_underlying_stream->seek(0, seek_origin::current) + offset;
-        if (m_open_mode == open_mode::read) {
+    case SeekOrigin::current:
+        position = m_underlying_stream->seek(0, SeekOrigin::current) + offset;
+        if (m_open_mode == OpenMode::read) {
             position = std::min(position, m_content_start + m_content_size);
         }
         position = std::max(position, m_content_start);
         break;
 
-    case seek_origin::end:
+    case SeekOrigin::end:
         position =
-            (m_open_mode == open_mode::read)
-                ? m_underlying_stream->seek(m_content_start + m_content_size, seek_origin::begin)
-                : m_underlying_stream->seek(0, seek_origin::end);
+            (m_open_mode == OpenMode::read)
+                ? m_underlying_stream->seek(m_content_start + m_content_size, SeekOrigin::begin)
+                : m_underlying_stream->seek(0, SeekOrigin::end);
         break;
 
     default:

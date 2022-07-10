@@ -21,7 +21,7 @@ class Camera final
 {
 public:
     /// The type of camera
-    enum class type
+    enum class Type
     {
         orthographic,
         perspective,
@@ -30,7 +30,7 @@ public:
     /// The camera properties
     struct Properties
     {
-        type    type{};     ///< The type of the camera
+        Type    type{};     ///< The type of the camera
         Vector3 position{}; ///< The world-space position of the camera
         Vector3 target{};   ///< The world-space vector of the target of the camera
         Vector3 up{};       ///< The world-space vector corresponding to 'up' on the camera

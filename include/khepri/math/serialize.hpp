@@ -23,8 +23,8 @@ struct SerializeTraits<Vector2>
     static Vector2 deserialize(Deserializer& d)
     {
         Vector2 v;
-        v.x = d.read<Vector2::component_type>();
-        v.y = d.read<Vector2::component_type>();
+        v.x = d.read<Vector2::ComponentType>();
+        v.y = d.read<Vector2::ComponentType>();
         return v;
     }
 };
@@ -45,9 +45,9 @@ struct SerializeTraits<Vector3>
     static Vector3 deserialize(Deserializer& d)
     {
         Vector3 v;
-        v.x = d.read<Vector3::component_type>();
-        v.y = d.read<Vector3::component_type>();
-        v.z = d.read<Vector3::component_type>();
+        v.x = d.read<Vector3::ComponentType>();
+        v.y = d.read<Vector3::ComponentType>();
+        v.z = d.read<Vector3::ComponentType>();
         return v;
     }
 };
@@ -69,10 +69,10 @@ struct SerializeTraits<Vector4>
     static Vector4 deserialize(Deserializer& d)
     {
         Vector4 v;
-        v.x = d.read<Vector4::component_type>();
-        v.y = d.read<Vector4::component_type>();
-        v.z = d.read<Vector4::component_type>();
-        v.w = d.read<Vector4::component_type>();
+        v.x = d.read<Vector4::ComponentType>();
+        v.y = d.read<Vector4::ComponentType>();
+        v.z = d.read<Vector4::ComponentType>();
+        v.w = d.read<Vector4::ComponentType>();
         return v;
     }
 };

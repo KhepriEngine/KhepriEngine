@@ -27,22 +27,22 @@ class ColorRGB final
 {
 public:
     /// The type of the color's components
-    using component_type = float;
+    using ComponentType = float;
 
     /// The red component of the color
-    component_type r{};
+    ComponentType r{};
 
     /// The green component of the color
-    component_type g{};
+    ComponentType g{};
 
     /// The blue component of the color
-    component_type b{};
+    ComponentType b{};
 
     /// Constructs an uninitialized color_rgb
     constexpr ColorRGB() noexcept = default;
 
     /// Constructs the color_rgb from literals
-    constexpr ColorRGB(component_type fr, component_type fg, component_type fb) noexcept
+    constexpr ColorRGB(ComponentType fr, ComponentType fg, ComponentType fb) noexcept
         : r(fr), g(fg), b(fb)
     {}
 
@@ -75,7 +75,7 @@ public:
     }
 
     /// Scales the color by scalar \a s
-    ColorRGB& operator*=(component_type s) noexcept
+    ColorRGB& operator*=(ComponentType s) noexcept
     {
         r *= s;
         g *= s;
@@ -84,7 +84,7 @@ public:
     }
 
     /// Scales the color with scalar 1 / \a s
-    ColorRGB& operator/=(component_type s) noexcept
+    ColorRGB& operator/=(ComponentType s) noexcept
     {
         r /= s;
         g /= s;
@@ -93,17 +93,17 @@ public:
     }
 
     /// Indexes the color. 0 is Red, 1 is Green, etc
-    [[nodiscard]] const component_type& operator[](int index) const noexcept
+    [[nodiscard]] const ComponentType& operator[](int index) const noexcept
     {
         assert(index < 3);
-        return gsl::span<const component_type>(&r, 3)[index];
+        return gsl::span<const ComponentType>(&r, 3)[index];
     }
 
     /// Indexes the color. 0 is Red, 1 is Green, etc
-    component_type& operator[](int index) noexcept
+    ComponentType& operator[](int index) noexcept
     {
         assert(index < 3);
-        return gsl::span<component_type>(&r, 3)[index];
+        return gsl::span<ComponentType>(&r, 3)[index];
     }
 };
 #pragma pack(pop)
@@ -163,8 +163,8 @@ inline ColorRGB operator*(const ColorRGB& c1, const ColorRGB& c2) noexcept
  *
  * \return \a val, with each component clamped between \a min and \a max.
  */
-constexpr ColorRGB clamp(const ColorRGB& col, ColorRGB::component_type min,
-                         ColorRGB::component_type max) noexcept
+constexpr ColorRGB clamp(const ColorRGB& col, ColorRGB::ComponentType min,
+                         ColorRGB::ComponentType max) noexcept
 {
     return {clamp(col.r, min, max), clamp(col.g, min, max), clamp(col.b, min, max)};
 }
