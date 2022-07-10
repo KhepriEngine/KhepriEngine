@@ -1,5 +1,7 @@
 # Khepri Engine
 
+[![build](https://github.com/KhepriEngine/KhepriEngine/actions/workflows/main.yml/badge.svg)](https://github.com/KhepriEngine/KhepriEngine/actions/workflows/main.yml?query=branch%3Amain)
+
 Khepri is a C++ game engine library.
 
 ## Requirements
