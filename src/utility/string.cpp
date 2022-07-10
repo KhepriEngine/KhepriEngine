@@ -33,7 +33,7 @@ std::string_view trim(std::string_view str)
     return str.substr(start, end + 1 - start);
 }
 
-bool case_insensitive_equals(std::string_view s1, std::string_view s2) noexcept
+bool case_insensitive_equals(std::string_view s1, std::string_view s2)
 {
     using CharType = std::string_view::value_type;
     auto const& ct = std::use_facet<std::ctype<CharType>>(std::locale::classic());

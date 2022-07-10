@@ -162,13 +162,19 @@ bool Application::run() noexcept
     // In debug mode we turn on memory checking
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
+    try {
+        const auto curdir = get_current_directory();
+        LOG.info("Application starting up in \"{}\"", curdir);
 
-    const auto curdir = get_current_directory();
-    LOG.info("Application starting up in \"{}\"", curdir);
-
-    Window window(m_application_name);
-    handle_native_exceptions([&] { handle_language_exceptions([&] { do_run(window, curdir); }); });
-    LOG.info("Application shutting down");
+        Window window(m_application_name);
+        handle_native_exceptions(
+            [&] { handle_language_exceptions([&] { do_run(window, curdir); }); });
+        LOG.info("Application shutting down");
+    } catch (const std::exception& e) {
+        LOG.error("caught exception at top-level: {}", e.what());
+    } catch (...) {
+        LOG.error("caught unknown throwable at top-level");
+    }
 
     std::set_terminate(m_previous_terminate_handler);
     return true;

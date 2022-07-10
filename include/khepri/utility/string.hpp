@@ -32,7 +32,7 @@ std::string_view trim(std::string_view str);
  *
  * @note the case-insensitive comparison is locale-independent
  */
-bool case_insensitive_equals(std::string_view s1, std::string_view s2) noexcept;
+bool case_insensitive_equals(std::string_view s1, std::string_view s2);
 
 /**
  * Less-than comparator for case-insensitive comparisons on string-like objects.

@@ -24,14 +24,10 @@ public:
     FontCache();
     ~FontCache();
 
-    /// Constructs a font cache by moving from another font cache
-    FontCache(FontCache&& cache) noexcept;
-
-    /// Moves another font cache into this object
-    FontCache& operator=(FontCache&& cache) noexcept;
-
     FontCache(const FontCache& cache) = delete;
+    FontCache(FontCache&& cache) = delete;
     FontCache& operator=(const FontCache& cache) = delete;
+    FontCache& operator=(FontCache&& cache) = delete;
 
     /**
      * Adds a font face to the cache.

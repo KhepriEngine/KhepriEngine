@@ -54,9 +54,6 @@ private:
 FontCache::FontCache()  = default;
 FontCache::~FontCache() = default;
 
-FontCache::FontCache(FontCache&& cache) noexcept = default;
-FontCache& FontCache::operator=(FontCache&& cache) noexcept = default;
-
 void FontCache::add_face(std::string_view name, const FontFaceDesc& font_face_desc)
 {
     const auto it = m_faces.find(name);
