@@ -10,12 +10,14 @@ on:
 
 jobs:
   build:
-    # Use Windows 2019 specifically to get VS2019, which allows downloading pre-built binaries from conan center, rather than rebuilding them in CI.
-    runs-on: windows-2019
     strategy:
       matrix:
+        # Use Windows 2019 specifically to get VS2019, which allows downloading
+        # pre-built binaries from conan center, rather than rebuilding them in CI.
+        os: ['windows-2019', 'ubuntu-20.04', 'macos-12']
         build_type: ['Debug','Release']
 
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
 
@@ -30,4 +32,8 @@ jobs:
         run: conan profile new default --detect
 
       - name: Build project in ${{ matrix.build_type }} mode
-        run: conan create . -s build_type=${{ matrix.build_type }}
+        run: conan create . -s build_type=${{ matrix.build_type }} --build=missing
+        env:
+          # Automatically install missing system depencies (e.g. with apt)
+          CONAN_SYSREQUIRES_MODE: enabled
+          CONAN_SYSREQUIRES_SUDO: 1
