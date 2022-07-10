@@ -162,7 +162,7 @@ auto create_subresources(unsigned long width, unsigned long height, unsigned lon
         case PixelFormat::bc2_unorm_srgb:
         case PixelFormat::bc3_unorm_srgb: {
             // Block compression
-            auto bpe =
+            std::size_t bpe =
                 (pixel_format == PixelFormat::bc1_unorm_srgb) ? BITS_PER_BYTE : 2 * BITS_PER_BYTE;
             auto blocks_w = (mip_width > 0) ? std::max(1UL, round_up(mip_width, 4UL)) : 0;
             auto blocks_h = (mip_height > 0) ? std::max(1UL, round_up(mip_height, 4UL)) : 0;

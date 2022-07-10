@@ -373,7 +373,7 @@ TextRender FontFaceState::render(std::u16string_view text, const FontOptions& op
     // issues during texture sampling when rendering the texture.
     const auto tex_width  = ceil_power_of_two(text_rect.width + 2);
     const auto tex_height = ceil_power_of_two(text_rect.height + 2);
-    const auto tex_pitch  = tex_width * 4;
+    const auto tex_pitch  = tex_width * std::size_t{4};
 
     // Create empty, transparent texture
     std::vector<std::uint8_t> data(tex_pitch * tex_height, 0);
@@ -414,10 +414,10 @@ TextRender FontFaceState::render(std::u16string_view text, const FontOptions& op
             // color when calculating the final color. This avoids intermediate RGB -> sRGB ->
             // RGB conversions for the color channel and avoids the need to store the
             // intermediate texture at a higher resolution.
-            const auto src_buffer =
-                gsl::span<const std::uint8_t>(bitmap.buffer, bitmap.rows * bitmap.pitch);
-            const auto dst_buffer =
-                gsl::span<std::uint8_t>(data).subspan((y + 1) * tex_pitch + (x + 1) * 4);
+            const auto src_buffer = gsl::span<const std::uint8_t>(
+                bitmap.buffer, bitmap.rows * static_cast<std::size_t>(bitmap.pitch));
+            const auto dst_buffer = gsl::span<std::uint8_t>(data).subspan((y + 1) * tex_pitch +
+                                                                          (x + 1) * std::size_t{4});
             blend_bitmap_alpha(src_buffer, bitmap.width, bitmap.rows, bitmap.pitch, dst_buffer,
                                tex_pitch);
         }
@@ -463,10 +463,10 @@ TextRender FontFaceState::render(std::u16string_view text, const FontOptions& op
         gradient.color_bottom   = options.color_bottom;
         gradient.color_bottom_y = y_color_bottom - y;
 
-        const auto src_buffer =
-            gsl::span<const std::uint8_t>(bitmap.buffer, bitmap.rows * bitmap.pitch);
+        const auto src_buffer = gsl::span<const std::uint8_t>(
+            bitmap.buffer, bitmap.rows * static_cast<size_t>(bitmap.pitch));
         const auto dst_buffer =
-            gsl::span<std::uint8_t>(data).subspan((y + 1) * tex_pitch + (x + 1) * 4);
+            gsl::span<std::uint8_t>(data).subspan((y + 1) * tex_pitch + (x + 1) * std::size_t{4});
         blend_bitmap(src_buffer, bitmap.width, bitmap.rows, bitmap.pitch, dst_buffer, tex_pitch,
                      gradient, options.stroke_color, options.embossed);
     }

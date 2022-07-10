@@ -150,10 +150,12 @@ TextureDesc load_texture_tga(khepri::io::Stream& stream)
     }
 
     // Read the image in B8G8R8A8 format
-    std::vector<std::uint8_t> data(header.image_width * header.image_height * 4);
+    std::vector<std::uint8_t> data(header.image_width *
+                                   static_cast<std::size_t>(header.image_height) * 4);
 
     // We have to repack the image data to get the wanted format
-    const std::size_t pixel_count = header.image_width * header.image_height;
+    const std::size_t pixel_count =
+        header.image_width * static_cast<std::size_t>(header.image_height);
 
     std::vector<std::uint8_t> raw_data(pixel_count * header.image_bpp / 8U);
     stream.read(raw_data.data(), raw_data.size());
@@ -162,7 +164,8 @@ TextureDesc load_texture_tga(khepri::io::Stream& stream)
     for (std::size_t y = 1, s = 0; y <= header.image_height; ++y) {
         // Note: targa image data are stored upside-down (bottom scanline first)
         auto dest = gsl::span<std::uint8_t>(
-            &data[(header.image_height - y) * header.image_width * 4], header.image_width * 4);
+            &data[(header.image_height - y) * header.image_width * std::size_t{4}],
+            header.image_width * std::size_t{4});
 
         switch (header.image_bpp) {
         case 32:
@@ -233,7 +236,8 @@ void save_texture_tga(khepri::io::Stream& stream, const TextureDesc& texture_des
     header.image_descriptor = 0;
     write_header(stream, header);
 
-    std::vector<std::uint8_t> data(header.image_width * header.image_height * 4);
+    std::vector<std::uint8_t> data(header.image_width *
+                                   static_cast<std::size_t>(header.image_height) * 4);
 
     const auto& subresource = texture_desc.subresource(0);
     for (std::size_t y = 1; y <= header.image_height; ++y) {

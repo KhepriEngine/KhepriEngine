@@ -406,18 +406,26 @@ Renderer::create_material(const khepri::renderer::MaterialDesc& material_desc)
     ci.GraphicsPipeline.DepthStencilDesc.DepthEnable = material_desc.depth_enable;
     ci.GraphicsPipeline.RasterizerDesc.CullMode      = to_cull_mode(material_desc.cull_mode);
 
+    static_assert(sizeof(MeshDesc::Vertex) < std::numeric_limits<Uint32>::max(),
+                  "Vertex is too large");
+
     constexpr auto                                 num_layout_elements = 5;
     std::array<LayoutElement, num_layout_elements> layout{
-        LayoutElement{0, 0, 3, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, position),
-                      sizeof(MeshDesc::Vertex)},
-        LayoutElement{1, 0, 3, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, normal),
-                      sizeof(MeshDesc::Vertex)},
-        LayoutElement{2, 0, 3, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, tangent),
-                      sizeof(MeshDesc::Vertex)},
-        LayoutElement{3, 0, 3, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, binormal),
-                      sizeof(MeshDesc::Vertex)},
-        LayoutElement{4, 0, 2, VT_FLOAT32, false, offsetof(MeshDesc::Vertex, uv),
-                      sizeof(MeshDesc::Vertex)}};
+        LayoutElement{0, 0, 3, VT_FLOAT32, false,
+                      static_cast<Uint32>(offsetof(MeshDesc::Vertex, position)),
+                      static_cast<Uint32>(sizeof(MeshDesc::Vertex))},
+        LayoutElement{1, 0, 3, VT_FLOAT32, false,
+                      static_cast<Uint32>(offsetof(MeshDesc::Vertex, normal)),
+                      static_cast<Uint32>(sizeof(MeshDesc::Vertex))},
+        LayoutElement{2, 0, 3, VT_FLOAT32, false,
+                      static_cast<Uint32>(offsetof(MeshDesc::Vertex, tangent)),
+                      static_cast<Uint32>(sizeof(MeshDesc::Vertex))},
+        LayoutElement{3, 0, 3, VT_FLOAT32, false,
+                      static_cast<Uint32>(offsetof(MeshDesc::Vertex, binormal)),
+                      static_cast<Uint32>(sizeof(MeshDesc::Vertex))},
+        LayoutElement{4, 0, 2, VT_FLOAT32, false,
+                      static_cast<Uint32>(offsetof(MeshDesc::Vertex, uv)),
+                      static_cast<Uint32>(sizeof(MeshDesc::Vertex))}};
     ci.GraphicsPipeline.InputLayout.LayoutElements = layout.data();
     ci.GraphicsPipeline.InputLayout.NumElements    = static_cast<Uint32>(layout.size());
 
