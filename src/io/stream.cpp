@@ -69,8 +69,8 @@ std::string Stream::read_string()
 {
     std::vector<char> x(read_ushort());
     if (!x.empty()) {
-        read_checked(*this, &x[0], x.size());
-        return std::string(x.begin(), x.end());
+        read_checked(*this, x.data(), x.size());
+        return {x.begin(), x.end()};
     }
     return "";
 }

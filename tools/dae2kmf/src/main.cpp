@@ -115,7 +115,7 @@ khepri::renderer::ModelDesc create_model(const aiScene& scene)
         meshes.push_back(std::move(mesh));
     }
 
-    return khepri::renderer::ModelDesc(std::move(meshes));
+    return {std::move(meshes)};
 }
 } // namespace
 

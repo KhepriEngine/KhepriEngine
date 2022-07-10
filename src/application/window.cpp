@@ -21,14 +21,18 @@ Window* get_window(GLFWwindow* glfw_window)
     auto* data = glfwGetWindowUserPointer(glfw_window);
     return reinterpret_cast<Window*>(data); // NOLINT
 }
-} // namespace
 
-Window::Window(const std::string& title)
+auto create_window(const std::string& title)
 {
     glfwInit();
-
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    m_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, title.c_str(), nullptr, nullptr);
+    return glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, title.c_str(), nullptr, nullptr);
+}
+
+} // namespace
+
+Window::Window(const std::string& title) : m_window(create_window(title))
+{
     glfwSetWindowUserPointer(m_window, this);
     glfwSetFramebufferSizeCallback(m_window, framebuffer_size_changed);
     glfwSetCursorPosCallback(m_window, cursor_position_callback);

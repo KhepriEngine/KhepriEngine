@@ -63,7 +63,7 @@ File::File(const Path& path, OpenMode mode) : m_mode(mode)
 
 File::~File()
 {
-    std::fclose(m_handle);
+    (void)std::fclose(m_handle);
 }
 
 } // namespace khepri::io

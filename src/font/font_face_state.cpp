@@ -167,7 +167,7 @@ void blend_bitmap(gsl::span<const std::uint8_t> src, unsigned int width, unsigne
                     // Edge detection works by finding the "darkest" source pixel above/below it.
                     const auto darkest_top =
                         find_darkest_above(src, src_pitch, x, y, emboss_radius);
-                    pixel *= lerp(1.0f, darken_strength,
+                    pixel *= lerp(1.0F, darken_strength,
                                   static_cast<float>(max_value - darkest_top) / max_value);
 
                     const auto darkest_btm =

@@ -83,11 +83,9 @@ class ConsoleLogger::Impl final : private BaseLogger
 {
 public:
     Impl()
-    {
         // Logging goes to stderr by convention
-        m_owns_console  = (AllocConsole() != FALSE);
-        m_output_handle = GetStdHandle(STD_ERROR_HANDLE);
-    }
+        : m_owns_console(AllocConsole() != FALSE), m_output_handle(GetStdHandle(STD_ERROR_HANDLE))
+    {}
 
     Impl(const Impl&) = delete;
     Impl(Impl&&)      = delete;

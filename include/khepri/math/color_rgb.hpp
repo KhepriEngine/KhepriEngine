@@ -111,43 +111,43 @@ public:
 /// Negates color \a c
 inline ColorRGB operator-(const ColorRGB& c) noexcept
 {
-    return ColorRGB(-c.r, -c.g, -c.b);
+    return {-c.r, -c.g, -c.b};
 }
 
 /// Adds color \a c2 to vector \a c1
 inline ColorRGB operator+(const ColorRGB& c1, const ColorRGB& c2) noexcept
 {
-    return ColorRGB(c1.r + c2.r, c1.g + c2.g, c1.b + c2.b);
+    return {c1.r + c2.r, c1.g + c2.g, c1.b + c2.b};
 }
 
 /// Subtracts color \a c2 from color \a c1
 inline ColorRGB operator-(const ColorRGB& c1, const ColorRGB& c2) noexcept
 {
-    return ColorRGB(c1.r - c2.r, c1.g - c2.g, c1.b - c2.b);
+    return {c1.r - c2.r, c1.g - c2.g, c1.b - c2.b};
 }
 
 /// Scales color \a c with scalar \a s
 inline ColorRGB operator*(const ColorRGB& c, float s) noexcept
 {
-    return ColorRGB(c.r * s, c.g * s, c.b * s);
+    return {c.r * s, c.g * s, c.b * s};
 }
 
 /// Scales color \a c with scalar \a s
 inline ColorRGB operator*(float s, const ColorRGB& c) noexcept
 {
-    return ColorRGB(c.r * s, c.g * s, c.b * s);
+    return {c.r * s, c.g * s, c.b * s};
 }
 
 /// Scales vector \a c with scalar 1/\a s
 inline ColorRGB operator/(const ColorRGB& c, float s) noexcept
 {
-    return ColorRGB(c.r / s, c.g / s, c.b / s);
+    return {c.r / s, c.g / s, c.b / s};
 }
 
 /// Modulates color \a c1 with color \a c2
 inline ColorRGB operator*(const ColorRGB& c1, const ColorRGB& c2) noexcept
 {
-    return ColorRGB(c1.r * c2.r, c1.g * c2.g, c1.b * c2.b);
+    return {c1.r * c2.r, c1.g * c2.g, c1.b * c2.b};
 }
 
 /**

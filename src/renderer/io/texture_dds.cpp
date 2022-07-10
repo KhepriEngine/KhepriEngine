@@ -293,8 +293,14 @@ TextureDesc load_texture_dds(khepri::io::Stream& stream)
 
     const unsigned long depth_array_size = (dimension == TextureDimension::texture_3d) ? depth : 0;
 
-    return TextureDesc(dimension, width, height, depth_array_size, mip_levels, *format,
-                       std::move(subresources), std::move(data));
+    return {dimension,
+            width,
+            height,
+            depth_array_size,
+            mip_levels,
+            *format,
+            std::move(subresources),
+            std::move(data)};
 }
 
 } // namespace khepri::renderer::io

@@ -24,7 +24,7 @@ public:
     Scene& operator=(Scene&&) = delete;
 
     /// Returns the objects in the scene
-    const auto& objects() const noexcept
+    [[nodiscard]] const auto& objects() const noexcept
     {
         return m_objects;
     }

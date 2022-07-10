@@ -34,8 +34,8 @@ Frustum Camera::frustum(const Vector2& p1, const Vector2& p2) const noexcept
     // Constructs a side plane from its coordinates on the near plane (-1 <= x,y <= 1)
     // The @orthogonal_view_dir lies in the plane, orthogonal to the view direction.
     const auto create_side_plane = [&](float x, float y, const Vector3& orthogonal_view_dir) {
-        Vector3 near_position = m_matrices.view_proj_inv.transform_coord({x, y, 0.0f});
-        Vector3 far_position  = m_matrices.view_proj_inv.transform_coord({x, y, 1.0f});
+        Vector3 near_position = m_matrices.view_proj_inv.transform_coord({x, y, 0.0F});
+        Vector3 far_position  = m_matrices.view_proj_inv.transform_coord({x, y, 1.0F});
         Vector3 inside_dir    = normalize(cross(far_position - near_position, orthogonal_view_dir));
         return Plane(near_position, inside_dir);
     };
@@ -57,7 +57,7 @@ Frustum Camera::frustum(const Vector2& p1, const Vector2& p2) const noexcept
     const Plane near(m_properties.position + m_properties.znear * view_dir, view_dir);
     const Plane far(m_properties.position + m_properties.zfar * view_dir, -view_dir);
 
-    return Frustum(left, right, top, bottom, near, far);
+    return {left, right, top, bottom, near, far};
 }
 
 std::tuple<Vector3, Vector3> Camera::unproject(const Vector2& coords) const noexcept
