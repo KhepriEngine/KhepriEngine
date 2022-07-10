@@ -1,5 +1,3 @@
-#pragma once
-
 #include <khepri/io/container_stream.hpp>
 #include <khepri/io/exceptions.hpp>
 
