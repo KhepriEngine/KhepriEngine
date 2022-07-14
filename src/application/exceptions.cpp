@@ -117,9 +117,17 @@ void handle_native_exceptions(const std::string& /*context*/, TCallable callable
 template <typename TCallable>
 bool handle_language_exceptions(const std::string& context, TCallable callable)
 {
+#ifndef NDEBUG
+    // Don't catch exceptions in debug builds if a debugger is attached -- the debugger will catch
+    // them instead
+    if (IsDebuggerPresent()) {
+        return callable();
+    }
+#endif
+
     try {
         return callable();
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         LOG.error("Caught unhandled exception in '{}': {}", context, e.what());
 #ifdef _MSC_VER
         MessageBoxA(nullptr, e.what(), nullptr, MB_OK);
@@ -165,19 +173,12 @@ bool ExceptionHandler::invoke_void(const std::function<void()>& callable)
     // In debug mode we turn on memory checking
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
-    try {
-        return handle_native_exceptions(m_context, [&] {
-            return handle_language_exceptions(m_context, [&] {
-                callable();
-                return true;
-            });
+    return handle_native_exceptions(m_context, [&] {
+        return handle_language_exceptions(m_context, [&] {
+            callable();
+            return true;
         });
-    } catch (const std::exception& e) {
-        LOG.error("caught exception in '{}': {}", m_context, e.what());
-    } catch (...) {
-        LOG.error("caught unknown throwable in '{}'", m_context);
-    }
-    return false;
+    });
 }
 
 } // namespace khepri::application
