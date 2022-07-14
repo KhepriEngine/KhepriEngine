@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <iterator>
 
 namespace khepri::application {
 
@@ -43,9 +44,9 @@ private:
 
         try {
             fmt::memory_buffer out;
-            fmt::format_to(out, FMT_STRING("+{}.{:#03d} {}/{}: {}\n"), time_ms / MS_PER_S,
-                           time_ms % MS_PER_S, get_char(record.severity), record.logger,
-                           record.message);
+            fmt::format_to(std::back_inserter(out), FMT_STRING("+{}.{:#03d} {}/{}: {}\n"),
+                           time_ms / MS_PER_S, time_ms % MS_PER_S, get_char(record.severity),
+                           record.logger, record.message);
             do_write({out.data(), out.size()});
         } catch (const fmt::format_error&) {
             assert(false);

@@ -40,7 +40,7 @@ class KhepriEngineConan(ConanFile):
         ("assimp/[>=5.0 <6.0]"),
         ("cxxopts/[>=2.0 <3.0]"),
         ("diligent-core/2.5.1"),
-        ("fmt/[>=6.0 <7.0]"),
+        ("fmt/9.0.0"),
         ("freetype/[>=2.0 <3.0]"),
         ("glfw/[>=3.0 <4.0]"),
         ("gsl-lite/0.36.0"),
