@@ -12,8 +12,9 @@ find_package(glfw3 REQUIRED)
 find_package(gsl-lite REQUIRED)
 
 add_library(${PROJECT_NAME}
-    src/application/application.cpp
     src/application/console_logger.cpp
+    src/application/current_directory.cpp
+    src/application/exceptions.cpp
     src/application/window.cpp
     src/font/io/font_face.cpp
     src/font/font_cache.cpp

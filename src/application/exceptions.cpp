@@ -1,3 +1,12 @@
+#include <khepri/application/exceptions.hpp>
+#include <khepri/log/log.hpp>
+
+#include <fmt/ranges.h>
+#include <gsl/gsl-lite.hpp>
+
+#include <exception>
+#include <utility>
+
 #if defined(_MSC_VER)
 #include <Windows.h>
 #ifndef NDEBUG
@@ -6,54 +15,28 @@
 #endif
 #endif
 
-#include <khepri/application/application.hpp>
-#include <khepri/log/log.hpp>
-
-#include <fmt/ranges.h>
-#include <gsl/gsl-lite.hpp>
-
-#include <array>
-
-#if !defined(_MSC_VER)
-#include <cstdlib>
-#include <unistd.h>
-#endif
-
-#include <exception>
-
 namespace khepri::application {
 namespace {
+
 constexpr log::Logger LOG("application");
 
-std::string get_current_directory()
-{
 #ifdef _MSC_VER
-    std::array<CHAR, MAX_PATH> curdir{};
-    GetCurrentDirectoryA(MAX_PATH, curdir.data());
-    return curdir.data();
-#else
-    char*       curdir_ = getcwd(nullptr, 0);
-    std::string curdir  = curdir_;
-    std::free(curdir_);
-    return curdir;
-#endif
-}
-
-#ifdef _MSC_VER
-void print_native_exception(HANDLE hProcess, EXCEPTION_POINTERS* exc_ptrs)
+void print_native_exception(const std::string& context, HANDLE hProcess,
+                            EXCEPTION_POINTERS* exc_ptrs)
 {
     if (exc_ptrs == nullptr || exc_ptrs->ExceptionRecord == nullptr) {
-        LOG.error("Caught unknown native exception");
+        LOG.error("Caught unknown native exception in '{}'", context);
     } else {
-        const auto* exceptr = exc_ptrs->ExceptionRecord;
-        auto*       context = exc_ptrs->ContextRecord;
+        const auto* exceptr        = exc_ptrs->ExceptionRecord;
+        auto*       context_record = exc_ptrs->ContextRecord;
 
         gsl::span<const ULONG_PTR> params(&exceptr->ExceptionInformation[0],
                                           exceptr->NumberParameters);
 
-        LOG.error("Caught native exception: code={:#x}, flags={}, address={:p}, params={{{:#x}}}",
-                  exceptr->ExceptionCode, exceptr->ExceptionFlags, exceptr->ExceptionAddress,
-                  fmt::join(params, ", "));
+        LOG.error(
+            "Caught native exception in '{}': code={:#x}, flags={}, address={:p}, params={{{:#x}}}",
+            context, exceptr->ExceptionCode, exceptr->ExceptionFlags, exceptr->ExceptionAddress,
+            fmt::join(params, ", "));
 #ifndef NDEBUG
         DWORD machine_type = 0;
 #if defined(_M_IX86)
@@ -66,8 +49,9 @@ void print_native_exception(HANDLE hProcess, EXCEPTION_POINTERS* exc_ptrs)
         LOG.error("Stack trace:");
 
         STACKFRAME frame{};
-        while (StackWalk64(machine_type, hProcess, GetCurrentThread(), &frame, context, nullptr,
-                           SymFunctionTableAccess64, SymGetModuleBase64, nullptr) != FALSE) {
+        while (StackWalk64(machine_type, hProcess, GetCurrentThread(), &frame, context_record,
+                           nullptr, SymFunctionTableAccess64, SymGetModuleBase64,
+                           nullptr) != FALSE) {
             std::array<char, sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)> buffer{};
             auto* pSymbol         = reinterpret_cast<SYMBOL_INFO*>(buffer.data()); // NOLINT
             pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -95,14 +79,13 @@ void print_native_exception(HANDLE hProcess, EXCEPTION_POINTERS* exc_ptrs)
 }
 
 template <typename TCallable>
-void handle_native_exceptions(TCallable callable)
+bool handle_native_exceptions(const std::string& context, TCallable callable)
 {
 #ifndef NDEBUG
     // Don't catch exceptions in debug builds if a debugger is attached -- the debugger will catch
     // them instead
     if (IsDebuggerPresent()) {
-        callable();
-        return;
+        return callable();
     }
 #endif
 
@@ -111,50 +94,70 @@ void handle_native_exceptions(TCallable callable)
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS);
     SymInitialize(hProcess, nullptr, TRUE);
 #endif
+    bool result = false;
     __try {
-        callable();
+        result = callable();
         // NOLINTNEXTLINE -- GetExceptionInformation is a macro and confuses clang-tidy
-    } __except (print_native_exception(hProcess, GetExceptionInformation()),
+    } __except (print_native_exception(context, hProcess, GetExceptionInformation()),
                 EXCEPTION_EXECUTE_HANDLER) {
     }
 #ifndef NDEBUG
     SymCleanup(hProcess);
 #endif
+    return result;
 }
 #else
 template <typename TCallable>
-void handle_native_exceptions(TCallable callable)
+void handle_native_exceptions(const std::string& /*context*/, TCallable callable)
 {
     callable();
 }
 #endif
 
 template <typename TCallable>
-void handle_language_exceptions(TCallable callable)
+bool handle_language_exceptions(const std::string& context, TCallable callable)
 {
     try {
-        callable();
+        return callable();
     } catch (std::exception& e) {
-        LOG.error("Caught unhandled exception: {}", e.what());
+        LOG.error("Caught unhandled exception in '{}': {}", context, e.what());
 #ifdef _MSC_VER
         MessageBoxA(nullptr, e.what(), nullptr, MB_OK);
 #endif
     } catch (...) {
-        LOG.error("Caught unhandled unknown exception");
+        LOG.error("Caught unhandled unknown exception in '{}'", context);
     }
+    return false;
 }
+
+class ScopedTerminateHandler
+{
+public:
+    ScopedTerminateHandler(const std::terminate_handler& handler)
+        : m_previous_handler{std::set_terminate(handler)}
+    {}
+
+    ScopedTerminateHandler(const ScopedTerminateHandler&) = delete;
+    ScopedTerminateHandler& operator=(const ScopedTerminateHandler&) = delete;
+
+    ~ScopedTerminateHandler()
+    {
+        std::set_terminate(m_previous_handler);
+    }
+
+private:
+    std::terminate_handler m_previous_handler;
+};
+
 } // namespace
 
-Application::Application(std::string_view application_name) : m_application_name(application_name)
-{}
+ExceptionHandler::ExceptionHandler(std::string context) : m_context(context) {}
 
-Application::~Application() = default;
-
-bool Application::run() noexcept
+bool ExceptionHandler::invoke_void(const std::function<void()>& callable)
 {
     // Set the terminate handler
-    m_previous_terminate_handler = std::set_terminate([]() {
-        LOG.critical("Unhandled exception");
+    ScopedTerminateHandler terminate_handler([] {
+        LOG.critical("std::terminate was called");
         std::abort();
     });
 
@@ -163,21 +166,18 @@ bool Application::run() noexcept
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
     try {
-        const auto curdir = get_current_directory();
-        LOG.info("Application starting up in \"{}\"", curdir);
-
-        Window window(m_application_name);
-        handle_native_exceptions(
-            [&] { handle_language_exceptions([&] { do_run(window, curdir); }); });
-        LOG.info("Application shutting down");
+        return handle_native_exceptions(m_context, [&] {
+            return handle_language_exceptions(m_context, [&] {
+                callable();
+                return true;
+            });
+        });
     } catch (const std::exception& e) {
-        LOG.error("caught exception at top-level: {}", e.what());
+        LOG.error("caught exception in '{}': {}", m_context, e.what());
     } catch (...) {
-        LOG.error("caught unknown throwable at top-level");
+        LOG.error("caught unknown throwable in '{}'", m_context);
     }
-
-    std::set_terminate(m_previous_terminate_handler);
-    return true;
+    return false;
 }
 
 } // namespace khepri::application
