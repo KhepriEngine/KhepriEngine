@@ -2,6 +2,8 @@
 #include <khepri/io/stream.hpp>
 #include <khepri/renderer/texture_desc.hpp>
 
+#include <gsl/gsl-lite.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <optional>
@@ -88,28 +90,164 @@ constexpr std::uint32_t fourcc(char ch0, char ch1, char ch2, char ch3) noexcept
            (static_cast<std::uint32_t>(static_cast<std::uint8_t>(ch3)) << (BITS_PER_BYTE * 3));
 }
 
-std::optional<PixelFormat> pixel_format(const DdsPixelFormat& ddpf)
+class PixelFormatHandler
+{
+public:
+    explicit PixelFormatHandler(PixelFormat output_format) : m_output_format(output_format) {}
+
+    PixelFormatHandler(const PixelFormatHandler&) = delete;
+    PixelFormatHandler& operator=(const PixelFormatHandler&) = delete;
+
+    virtual ~PixelFormatHandler() = default;
+
+    PixelFormat output_format() const noexcept
+    {
+        return m_output_format;
+    }
+
+    virtual TextureDesc::Subresource
+    create_subresource(std::size_t mip_level, unsigned long mip_width,
+                       unsigned long mip_height) const noexcept = 0;
+
+    virtual std::vector<std::uint8_t>
+    read_pixel_data(khepri::io::Stream&                       stream,
+                    gsl::span<const TextureDesc::Subresource> subresources) const
+    {
+        std::size_t data_size = 0;
+        for (const auto& subresource : subresources) {
+            data_size += subresource.data_size;
+        }
+
+        std::vector<std::uint8_t> data(data_size);
+        if (stream.read(data.data(), data_size) != data_size) {
+            throw khepri::io::InvalidFormatError();
+        }
+        return data;
+    }
+
+private:
+    PixelFormat m_output_format;
+};
+
+// Handler for BC1, BC2, BC3. Also known as DXT1-DXT5.
+class BlockCompressionPixelFormatHandler : public PixelFormatHandler
+{
+public:
+    using PixelFormatHandler::PixelFormatHandler;
+
+    TextureDesc::Subresource create_subresource(std::size_t mip_level, unsigned long mip_width,
+                                                unsigned long mip_height) const noexcept override
+    {
+        // Block compression
+        std::size_t bpe =
+            (output_format() == PixelFormat::bc1_unorm_srgb) ? BITS_PER_BYTE : 2 * BITS_PER_BYTE;
+        auto blocks_w = (mip_width > 0) ? std::max(1UL, round_up(mip_width, 4UL)) : 0;
+        auto blocks_h = (mip_height > 0) ? std::max(1UL, round_up(mip_height, 4UL)) : 0;
+
+        TextureDesc::Subresource subresource{};
+        subresource.stride       = blocks_w * bpe;
+        subresource.depth_stride = subresource.stride * blocks_h;
+        return subresource;
+    }
+};
+
+// Handler for 32-bit RGBA formats
+class RGBA32PixelFormatHandler : public PixelFormatHandler
+{
+public:
+    using PixelFormatHandler::PixelFormatHandler;
+
+    TextureDesc::Subresource create_subresource(std::size_t mip_level, unsigned long mip_width,
+                                                unsigned long mip_height) const noexcept override
+    {
+        constexpr auto bpp = 32;
+
+        TextureDesc::Subresource subresource{};
+        subresource.stride       = round_up(mip_width * bpp, 8UL); // Round up to nearest byte
+        subresource.depth_stride = subresource.stride * mip_height;
+        return subresource;
+    }
+};
+
+// Handler for 24-bit RGB formats.
+// Since 24-bits RGB formats are not supported by the renderer, such textures must be converted to
+// 32-bit RGBA formats.
+class RGB24PixelFormatHandler : public PixelFormatHandler
+{
+public:
+    using PixelFormatHandler::PixelFormatHandler;
+
+    TextureDesc::Subresource create_subresource(std::size_t mip_level, unsigned long mip_width,
+                                                unsigned long mip_height) const noexcept override
+    {
+        constexpr auto bpp = 32;
+
+        TextureDesc::Subresource subresource{};
+        subresource.stride       = round_up(mip_width * bpp, 8UL); // Round up to nearest byte
+        subresource.depth_stride = subresource.stride * mip_height;
+        return subresource;
+    }
+
+    std::vector<std::uint8_t>
+    read_pixel_data(khepri::io::Stream&                       stream,
+                    gsl::span<const TextureDesc::Subresource> subresources) const override
+    {
+        std::size_t output_data_size = 0;
+        for (const auto& subresource : subresources) {
+            output_data_size += subresource.data_size;
+        }
+        std::size_t input_data_size = output_data_size / 4 * 3;
+
+        std::vector<std::uint8_t> input_data(input_data_size);
+        if (stream.read(input_data.data(), input_data_size) != input_data_size) {
+            throw khepri::io::InvalidFormatError();
+        }
+
+        std::vector<std::uint8_t> output_data(output_data_size);
+        for (std::size_t i = 0, o = 0; i < input_data_size; i += 3, o += 4) {
+            output_data[o + 0] = input_data[i + 0];
+            output_data[o + 1] = input_data[i + 1];
+            output_data[o + 2] = input_data[i + 2];
+            output_data[o + 3] = 0; // Clear the alpha channel since the source didn't have it
+        }
+
+        return output_data;
+    }
+};
+
+std::unique_ptr<PixelFormatHandler> pixel_format_handler(const DdsPixelFormat& ddpf)
 {
     if ((ddpf.flags & ddpf_rgb) != 0) {
+        constexpr auto RGBA_MASK_R = 0x000000ffUL;
+        constexpr auto RGBA_MASK_G = 0x0000ff00UL;
+        constexpr auto RGBA_MASK_B = 0x00ff0000UL;
+        constexpr auto RGBA_MASK_A = 0xff000000UL;
+
+        constexpr auto BGRA_MASK_R = 0x00ff0000UL;
+        constexpr auto BGRA_MASK_G = 0x0000ff00UL;
+        constexpr auto BGRA_MASK_B = 0x000000ffUL;
+        constexpr auto BGRA_MASK_A = 0xff000000UL;
+
         switch (ddpf.rgb_bitcount) {
+        case 24: {
+            if (ddpf.r_mask == RGBA_MASK_R && ddpf.g_mask == RGBA_MASK_G &&
+                ddpf.b_mask == RGBA_MASK_B && ddpf.a_mask == 0) {
+                return std::make_unique<RGB24PixelFormatHandler>(PixelFormat::r8g8b8a8_unorm_srgb);
+            }
+            if (ddpf.r_mask == BGRA_MASK_R && ddpf.g_mask == BGRA_MASK_G &&
+                ddpf.b_mask == BGRA_MASK_B && ddpf.a_mask == 0) {
+                return std::make_unique<RGB24PixelFormatHandler>(PixelFormat::b8g8r8a8_unorm_srgb);
+            }
+            break;
+        }
         case 32: {
-            constexpr auto RGBA_MASK_R = 0x000000ffUL;
-            constexpr auto RGBA_MASK_G = 0x0000ff00UL;
-            constexpr auto RGBA_MASK_B = 0x00ff0000UL;
-            constexpr auto RGBA_MASK_A = 0xff000000UL;
-
-            constexpr auto BGRA_MASK_R = 0x00ff0000UL;
-            constexpr auto BGRA_MASK_G = 0x0000ff00UL;
-            constexpr auto BGRA_MASK_B = 0x000000ffUL;
-            constexpr auto BGRA_MASK_A = 0xff000000UL;
-
             if (ddpf.r_mask == RGBA_MASK_R && ddpf.g_mask == RGBA_MASK_G &&
                 ddpf.b_mask == RGBA_MASK_B && ddpf.a_mask == RGBA_MASK_A) {
-                return PixelFormat::r8g8b8a8_unorm_srgb;
+                return std::make_unique<RGBA32PixelFormatHandler>(PixelFormat::r8g8b8a8_unorm_srgb);
             }
             if (ddpf.r_mask == BGRA_MASK_R && ddpf.g_mask == BGRA_MASK_G &&
                 ddpf.b_mask == BGRA_MASK_B && ddpf.a_mask == BGRA_MASK_A) {
-                return PixelFormat::b8g8r8a8_unorm_srgb;
+                return std::make_unique<RGBA32PixelFormatHandler>(PixelFormat::b8g8r8a8_unorm_srgb);
             }
             break;
         }
@@ -119,13 +257,16 @@ std::optional<PixelFormat> pixel_format(const DdsPixelFormat& ddpf)
         // so DXT2/3 and DXT4/5 are treated the same.
         switch (ddpf.fourcc) {
         case fourcc('D', 'X', 'T', '1'):
-            return PixelFormat::bc1_unorm_srgb;
+            return std::make_unique<BlockCompressionPixelFormatHandler>(
+                PixelFormat::bc1_unorm_srgb);
         case fourcc('D', 'X', 'T', '2'):
         case fourcc('D', 'X', 'T', '3'):
-            return PixelFormat::bc2_unorm_srgb;
+            return std::make_unique<BlockCompressionPixelFormatHandler>(
+                PixelFormat::bc2_unorm_srgb);
         case fourcc('D', 'X', 'T', '4'):
         case fourcc('D', 'X', 'T', '5'):
-            return PixelFormat::bc3_unorm_srgb;
+            return std::make_unique<BlockCompressionPixelFormatHandler>(
+                PixelFormat::bc3_unorm_srgb);
         }
     }
     // Unsupported or unknown format
@@ -146,7 +287,7 @@ bool is_texture_dds(khepri::io::Stream& stream)
 }
 
 auto create_subresources(unsigned long width, unsigned long height, unsigned long depth,
-                         unsigned long mip_levels, PixelFormat pixel_format)
+                         unsigned long mip_levels, const PixelFormatHandler& pixel_format_handler)
 {
     size_t data_offset = 0;
     auto   mip_width   = width;
@@ -155,39 +296,11 @@ auto create_subresources(unsigned long width, unsigned long height, unsigned lon
 
     std::vector<TextureDesc::Subresource> subresources(mip_levels);
     for (size_t mip = 0; mip < mip_levels; ++mip) {
-        auto& subresource = subresources[mip];
-
-        switch (pixel_format) {
-        case PixelFormat::bc1_unorm_srgb:
-        case PixelFormat::bc2_unorm_srgb:
-        case PixelFormat::bc3_unorm_srgb: {
-            // Block compression
-            std::size_t bpe =
-                (pixel_format == PixelFormat::bc1_unorm_srgb) ? BITS_PER_BYTE : 2 * BITS_PER_BYTE;
-            auto blocks_w = (mip_width > 0) ? std::max(1UL, round_up(mip_width, 4UL)) : 0;
-            auto blocks_h = (mip_height > 0) ? std::max(1UL, round_up(mip_height, 4UL)) : 0;
-
-            subresource.stride       = blocks_w * bpe;
-            subresource.depth_stride = subresource.stride * blocks_h;
-            break;
-        }
-
-        case PixelFormat::b8g8r8a8_unorm_srgb:
-        case PixelFormat::r8g8b8a8_unorm_srgb: {
-            constexpr auto bpp = 32;
-
-            subresource.stride       = round_up(mip_width * bpp, 8UL); // Round up to nearest byte
-            subresource.depth_stride = subresource.stride * height;
-            break;
-        }
-
-        default:
-            assert(false);
-            break;
-        }
-
+        auto subresource = pixel_format_handler.create_subresource(mip, mip_width, mip_height);
         subresource.data_offset = data_offset;
         subresource.data_size   = subresource.depth_stride * mip_depth;
+
+        subresources[mip] = subresource;
 
         data_offset += subresource.data_size;
         mip_width  = std::max(1UL, mip_width / 2UL);
@@ -268,8 +381,8 @@ TextureDesc load_texture_dds(khepri::io::Stream& stream)
         throw khepri::io::InvalidFormatError();
     }
 
-    auto format = pixel_format(ddpf);
-    if (!format) {
+    auto format_handler = pixel_format_handler(ddpf);
+    if (!format_handler) {
         // Unsupported or unknown format
         throw khepri::io::InvalidFormatError();
     }
@@ -279,17 +392,9 @@ TextureDesc load_texture_dds(khepri::io::Stream& stream)
         throw khepri::io::InvalidFormatError();
     }
 
-    auto subresources = create_subresources(width, height, depth, mip_levels, *format);
+    auto subresources = create_subresources(width, height, depth, mip_levels, *format_handler);
 
-    size_t data_size = 0;
-    for (const auto& subresource : subresources) {
-        data_size += subresource.data_size;
-    }
-
-    std::vector<std::uint8_t> data(data_size);
-    if (stream.read(data.data(), data_size) != data_size) {
-        throw khepri::io::InvalidFormatError();
-    }
+    auto data = format_handler->read_pixel_data(stream, subresources);
 
     const unsigned long depth_array_size = (dimension == TextureDimension::texture_3d) ? depth : 0;
 
@@ -298,7 +403,7 @@ TextureDesc load_texture_dds(khepri::io::Stream& stream)
             height,
             depth_array_size,
             mip_levels,
-            *format,
+            format_handler->output_format(),
             std::move(subresources),
             std::move(data)};
 }
