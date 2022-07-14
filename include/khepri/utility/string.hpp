@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <vector>
 
 namespace khepri {
 
@@ -104,5 +105,13 @@ private:
     std::string_view            m_delimiters;
     std::string_view::size_type m_next;
 };
+
+/**
+ * @brief Splits a string into substrings
+ *
+ * @param str the string to split
+ * @param delimiters the delimiters to split the string on
+ */
+std::vector<std::string_view> split(std::string_view str, std::string_view delimiters);
 
 } // namespace khepri

@@ -59,4 +59,14 @@ std::optional<std::string_view> Tokenizer::next() noexcept
     return m_input.substr(start, count);
 }
 
+std::vector<std::string_view> split(std::string_view str, std::string_view delimiters)
+{
+    std::vector<std::string_view> result;
+
+    Tokenizer tokenizer(str, delimiters);
+    while (auto token = tokenizer.next()) {
+        result.push_back(*token);
+    }
+    return result;
+}
 } // namespace khepri
