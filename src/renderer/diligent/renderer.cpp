@@ -392,13 +392,22 @@ Renderer::create_material(const khepri::renderer::MaterialDesc& material_desc)
     GraphicsPipelineStateCreateInfo ci;
     ci.PSODesc.PipelineType = PIPELINE_TYPE_GRAPHICS;
 
-    if (material_desc.alpha_blend) {
+    switch (material_desc.alpha_blend_mode) {
+    case MaterialDesc::AlphaBlendMode::additive:
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].BlendEnable = true;
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].SrcBlend    = BLEND_FACTOR_ONE;
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].DestBlend   = BLEND_FACTOR_ONE;
+        ci.GraphicsPipeline.BlendDesc.RenderTargets[0].BlendOp     = BLEND_OPERATION_ADD;
+        break;
+    case MaterialDesc::AlphaBlendMode::blend_src:
         ci.GraphicsPipeline.BlendDesc.RenderTargets[0].BlendEnable = true;
         ci.GraphicsPipeline.BlendDesc.RenderTargets[0].SrcBlend    = BLEND_FACTOR_SRC_ALPHA;
         ci.GraphicsPipeline.BlendDesc.RenderTargets[0].DestBlend   = BLEND_FACTOR_INV_SRC_ALPHA;
         ci.GraphicsPipeline.BlendDesc.RenderTargets[0].BlendOp     = BLEND_OPERATION_ADD;
-    } else {
+        break;
+    case MaterialDesc::AlphaBlendMode::none:
         ci.GraphicsPipeline.BlendDesc.RenderTargets[0].BlendEnable = false;
+        break;
     }
     ci.GraphicsPipeline.NumRenderTargets             = 1;
     ci.GraphicsPipeline.RTVFormats[0]                = m_swapchain->GetDesc().ColorBufferFormat;

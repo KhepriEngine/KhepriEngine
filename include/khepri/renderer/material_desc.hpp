@@ -36,6 +36,19 @@ struct MaterialDesc
         front,
     };
 
+    /// The type of alpha blending
+    enum class AlphaBlendMode
+    {
+        /// Do not alpha blend.
+        none,
+
+        /// Source and destination are blended according to source alpha.
+        blend_src,
+
+        /// Source is added on top of destination.
+        additive,
+    };
+
     /// Value of a material shader property
     using PropertyValue =
         std::variant<std::int32_t, float, Vector2, Vector3, Vector4, Matrix, Texture*>;
@@ -54,8 +67,8 @@ struct MaterialDesc
     /// Face culling mode of this material
     CullMode cull_mode{CullMode::none};
 
-    /// Enable alpha blending when rendering with this material
-    bool alpha_blend{false};
+    /// Type of alpha blending to use when rendering with this material
+    AlphaBlendMode alpha_blend_mode{AlphaBlendMode::none};
 
     /// Enable depth-buffer test when rendering this material
     bool depth_enable{true};
