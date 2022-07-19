@@ -34,7 +34,7 @@ public:
         Vector3 position{}; ///< The world-space position of the camera
         Vector3 target{};   ///< The world-space vector of the target of the camera
         Vector3 up{};       ///< The world-space vector corresponding to 'up' on the camera
-        float   fov{};      ///< Horizontal field of view in radians (perspective cameras only)
+        float   fov{};      ///< Vertical field of view in radians (perspective cameras only)
         float   width{};    ///< Width, in world units, of the camera (orthographic cameras only)
         float   aspect{};   ///< Aspect ratio (Width / Height) of the render viewport
         float   znear{};    ///< Distance, in camera-space units, of the near clip plane
