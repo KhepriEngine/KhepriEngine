@@ -3,6 +3,7 @@
 #include <cctype>
 #include <locale>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -113,5 +114,19 @@ private:
  * @param delimiters the delimiters to split the string on
  */
 std::vector<std::string_view> split(std::string_view str, std::string_view delimiters);
+
+template <typename ContainerT>
+std::string join(const ContainerT& container, std::string_view separator)
+{
+    std::stringstream ss;
+    if (!container.empty()) {
+        auto it = container.begin();
+        ss << *it;
+        for (++it; it != container.end(); ++it) {
+            ss << separator << *it;
+        }
+    }
+    return ss.str();
+}
 
 } // namespace khepri
