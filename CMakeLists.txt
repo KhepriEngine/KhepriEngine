@@ -27,6 +27,7 @@ add_library(${PROJECT_NAME}
     src/log/log.cpp
     src/math/matrix.cpp
     src/math/quaternion.cpp
+    src/math/spline.cpp
     src/physics/collision_mesh.cpp
     src/renderer/io/kmf.cpp
     src/renderer/io/texture.cpp
@@ -106,6 +107,7 @@ if (BUILD_TESTING)
 
     add_executable(${PROJECT_NAME}Tests
         tests/version_test.cpp
+        tests/cubic_spline_test.cpp
     )
 
     target_link_Libraries(${PROJECT_NAME}Tests
