@@ -1,5 +1,6 @@
 #pragma once
 
+#include "color_rgba.hpp"
 #include "vector2.hpp"
 #include "vector3.hpp"
 #include "vector4.hpp"
@@ -74,6 +75,31 @@ struct SerializeTraits<Vector4>
         v.z = d.read<Vector4::ComponentType>();
         v.w = d.read<Vector4::ComponentType>();
         return v;
+    }
+};
+
+/// Specialization of #khepri::io::SerializeTraits for #khepri::ColorRGBA
+template <>
+struct SerializeTraits<ColorRGBA>
+{
+    /// \see #khepri::io::SerializeTraits::serialize
+    static void serialize(Serializer& s, const ColorRGBA& value)
+    {
+        s.write(value.r);
+        s.write(value.g);
+        s.write(value.b);
+        s.write(value.a);
+    }
+
+    /// \see #khepri::io::SerializeTraits::deserialize
+    static ColorRGBA deserialize(Deserializer& d)
+    {
+        ColorRGBA c;
+        c.r = d.read<ColorRGBA::ComponentType>();
+        c.g = d.read<ColorRGBA::ComponentType>();
+        c.b = d.read<ColorRGBA::ComponentType>();
+        c.a = d.read<ColorRGBA::ComponentType>();
+        return c;
     }
 };
 
