@@ -249,24 +249,27 @@ Vector3 CubicSpline::sample(float t) const noexcept
     // Bound the iterations so we don't end up in an infinite loop due to some floating point
     // rounding oddity.
     constexpr int max_iterations = 100;
-    float         u;
-    for (int i = 0; i < max_iterations; ++i) {
-        // Don't use midway interpolation, but linear interpolation based on the desired arc offset.
-        // This has a higher chance of `u` already being in the right area and thus needing fewer
-        // iterations.
-        const auto frac   = (arc_offset - arc_offset_start) / (arc_offset_end - arc_offset_start);
-        u                 = lerp(u_start, u_end, frac);
-        const auto length = arc_length(m_polynomials, index, 0.0, u) + arc_offset_segment;
-        if (std::abs(length - arc_offset) < 0.000001f) {
-            // We're close enough to the desired arc offset
-            break;
-        }
-        if (length < arc_offset) {
-            u_start          = u;
-            arc_offset_start = length;
-        } else {
-            u_end          = u;
-            arc_offset_end = length;
+    float         u              = u_start;
+    if (arc_offset_end - arc_offset_start > 0.0000001) {
+        // Non-degenerate segment
+        for (int i = 0; i < max_iterations; ++i) {
+            // Don't use midway interpolation, but linear interpolation based on the desired arc
+            // offset. This has a higher chance of `u` already being in the right area and thus
+            // needing fewer iterations.
+            const auto frac = (arc_offset - arc_offset_start) / (arc_offset_end - arc_offset_start);
+            u               = lerp(u_start, u_end, frac);
+            const auto length = arc_length(m_polynomials, index, 0.0, u) + arc_offset_segment;
+            if (std::abs(length - arc_offset) < 0.000001f) {
+                // We're close enough to the desired arc offset
+                break;
+            }
+            if (length < arc_offset) {
+                u_start          = u;
+                arc_offset_start = length;
+            } else {
+                u_end          = u;
+                arc_offset_end = length;
+            }
         }
     }
 
