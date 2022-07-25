@@ -253,6 +253,22 @@ inline Vector2 normalize(const Vector2& v) noexcept
 }
 
 /**
+ * \brief Rotates the vector around the origin.
+ *
+ * A positive angle rotates +x towards -y.
+ *
+ * \param v     the vector to rotate.
+ * \param angle the angle to rotate by, in radians.
+ * \return the rotated vector
+ */
+inline Vector2 rotate(const Vector2& v, float angle) noexcept
+{
+    const auto s = std::sin(angle);
+    const auto c = std::cos(angle);
+    return {c * v.x - s * v.y, s * v.x + c * v.y};
+}
+
+/**
  * \brief Clamps each component of a vector between two extremes
  *
  * Returns \a min if \a val.{x,y} < \a min.
