@@ -4,6 +4,7 @@
 
 #include <gsl/gsl-lite.hpp>
 
+#include <initializer_list>
 #include <vector>
 
 namespace khepri {
@@ -28,6 +29,15 @@ public:
      * @throws khepri::ArgumentError if points.size() < 2
      */
     explicit CubicSpline(gsl::span<const Vector3> points);
+
+    /**
+     * @brief Construct a new CubicSpline.
+     *
+     * @param points the points through which the spline must traverse.
+     *
+     * @throws khepri::ArgumentError if points.size() < 2
+     */
+    explicit CubicSpline(std::initializer_list<Vector3> points);
 
     /**
      * @brief Returns the points that this spline was constructed with.

@@ -163,6 +163,10 @@ CubicSpline::CubicSpline(gsl::span<const Vector3> points)
     , m_points{points.begin(), points.end()}
 {}
 
+CubicSpline::CubicSpline(std::initializer_list<Vector3> points)
+    : CubicSpline({points.begin(), points.end()})
+{}
+
 float CubicSpline::arc_length(const Polynomials& polynomials, std::size_t index, float u_from,
                               float u_to) noexcept
 {
