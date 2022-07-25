@@ -208,7 +208,7 @@ public:
             output_data[o + 0] = input_data[i + 0];
             output_data[o + 1] = input_data[i + 1];
             output_data[o + 2] = input_data[i + 2];
-            output_data[o + 3] = 0; // Clear the alpha channel since the source didn't have it
+            output_data[o + 3] = 255; // Set the alpha channel since the source didn't have it
         }
 
         return output_data;
