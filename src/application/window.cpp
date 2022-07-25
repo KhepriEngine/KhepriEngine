@@ -37,6 +37,7 @@ Window::Window(const std::string& title) : m_window(create_window(title))
     glfwSetFramebufferSizeCallback(m_window, framebuffer_size_changed);
     glfwSetCursorPosCallback(m_window, cursor_position_callback);
     glfwSetMouseButtonCallback(m_window, mouse_button_callback);
+    glfwSetScrollCallback(m_window, mouse_scroll_callback);
     LOG.info("Created window: {}", (void*)m_window);
 }
 
@@ -82,6 +83,11 @@ void Window::add_cursor_position_listener(const CursorPositionListener& listener
 void Window::add_mouse_button_listener(const MouseButtonListener& listener)
 {
     m_mouse_button_listeners.push_back(listener);
+}
+
+void Window::add_mouse_scroll_listener(const MouseScrollListener& listener)
+{
+    m_mouse_scroll_listeners.push_back(listener);
 }
 
 void Window::poll_events()
@@ -132,6 +138,17 @@ void Window::mouse_button_callback(GLFWwindow* w, int button, int action, int /*
 
         for (const auto& listener : window->m_mouse_button_listeners) {
             listener(window->m_cursor_pos, mb, mba);
+        }
+    }
+}
+
+void Window::mouse_scroll_callback(GLFWwindow* w, double xoffset, double yoffset)
+{
+    auto* window = get_window(w);
+    if (window != nullptr) {
+        for (const auto& listener : window->m_mouse_scroll_listeners) {
+            listener(window->m_cursor_pos,
+                     {static_cast<float>(xoffset), static_cast<float>(yoffset)});
         }
     }
 }

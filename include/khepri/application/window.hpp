@@ -2,6 +2,7 @@
 
 #include <khepri/math/point.hpp>
 #include <khepri/math/size.hpp>
+#include <khepri/math/vector2.hpp>
 
 #include <GLFW/glfw3.h>
 
@@ -48,6 +49,10 @@ public:
     /// Callback for "mouse button" events
     using MouseButtonListener =
         std::function<void(const khepri::Point& pos, MouseButton, MouseButtonAction)>;
+
+    /// Callback for "mouse scroll" events
+    using MouseScrollListener =
+        std::function<void(const khepri::Point& pos, const khepri::Vector2& scroll_offset)>;
 
     /**
      * Constructs the window
@@ -101,6 +106,13 @@ public:
     void add_mouse_button_listener(const MouseButtonListener& listener);
 
     /**
+     * Adds a listener for "mouse scroll" events.
+     * The cursor's position relative to the window's render area and the amount of horizontal and
+s     * vertical scroll is passed along.
+     */
+    void add_mouse_scroll_listener(const MouseScrollListener& listener);
+
+    /**
      * \brief observer and handle new events on the process's event queue.
      *
      * Every process has a single event queue that all user input events are posted to.
@@ -110,14 +122,16 @@ public:
     static void poll_events();
 
 private:
-    static void framebuffer_size_changed(GLFWwindow* windoww, int width, int height);
-    static void cursor_position_callback(GLFWwindow* windoww, double xpos, double ypos);
-    static void mouse_button_callback(GLFWwindow* windoww, int button, int action, int mods);
+    static void framebuffer_size_changed(GLFWwindow* window, int width, int height);
+    static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+    static void mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
     GLFWwindow*                         m_window;
     std::vector<SizeListener>           m_size_listeners;
     std::vector<CursorPositionListener> m_cursor_position_listeners;
     std::vector<MouseButtonListener>    m_mouse_button_listeners;
+    std::vector<MouseScrollListener>    m_mouse_scroll_listeners;
 
     khepri::Point m_cursor_pos{0, 0};
 };
