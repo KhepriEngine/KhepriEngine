@@ -418,7 +418,7 @@ Renderer::create_material(const khepri::renderer::MaterialDesc& material_desc)
     static_assert(sizeof(MeshDesc::Vertex) < std::numeric_limits<Uint32>::max(),
                   "Vertex is too large");
 
-    constexpr auto                                 num_layout_elements = 5;
+    constexpr auto                                 num_layout_elements = 6;
     std::array<LayoutElement, num_layout_elements> layout{
         LayoutElement{0, 0, 3, VT_FLOAT32, false,
                       static_cast<Uint32>(offsetof(MeshDesc::Vertex, position)),
@@ -434,6 +434,9 @@ Renderer::create_material(const khepri::renderer::MaterialDesc& material_desc)
                       static_cast<Uint32>(sizeof(MeshDesc::Vertex))},
         LayoutElement{4, 0, 2, VT_FLOAT32, false,
                       static_cast<Uint32>(offsetof(MeshDesc::Vertex, uv)),
+                      static_cast<Uint32>(sizeof(MeshDesc::Vertex))},
+        LayoutElement{5, 0, 4, VT_FLOAT32, false,
+                      static_cast<Uint32>(offsetof(MeshDesc::Vertex, color)),
                       static_cast<Uint32>(sizeof(MeshDesc::Vertex))}};
     ci.GraphicsPipeline.InputLayout.LayoutElements = layout.data();
     ci.GraphicsPipeline.InputLayout.NumElements    = static_cast<Uint32>(layout.size());

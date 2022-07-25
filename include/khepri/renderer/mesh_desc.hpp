@@ -1,5 +1,6 @@
 #pragma once
 
+#include <khepri/math/color_rgba.hpp>
 #include <khepri/math/vector2.hpp>
 #include <khepri/math/vector3.hpp>
 
@@ -35,6 +36,9 @@ struct MeshDesc final
 
         /// The vertex' texture coordinate
         Vector2 uv;
+
+        /// The vertex' color
+        ColorRGBA color;
     };
 
     /// The vertices in the mesh
