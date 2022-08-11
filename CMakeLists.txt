@@ -25,8 +25,6 @@ add_library(${PROJECT_NAME}
     src/io/file.cpp
     src/io/stream.cpp
     src/log/log.cpp
-    src/math/matrix.cpp
-    src/math/quaternion.cpp
     src/math/spline.cpp
     src/physics/collision_mesh.cpp
     src/renderer/io/kmf.cpp

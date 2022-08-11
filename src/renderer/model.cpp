@@ -12,7 +12,7 @@ auto compute_bounding_sphere(const std::vector<MeshDesc>& meshes)
     const Vector3 center(0, 0, 0);
 
     // Degenerate sphere by default
-    float radius = 0.0F;
+    double radius = 0.0;
 
     if (!meshes.empty()) {
         for (const auto& mesh : meshes) {
@@ -26,7 +26,7 @@ auto compute_bounding_sphere(const std::vector<MeshDesc>& meshes)
 
 auto create_collision_mesh(const std::vector<MeshDesc>& meshes)
 {
-    std::vector<Vector3>                       vertices;
+    std::vector<Vector3f>                      vertices;
     std::vector<physics::CollisionMesh::Index> indices;
 
     if (!meshes.empty()) {

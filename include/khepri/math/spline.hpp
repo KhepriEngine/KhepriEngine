@@ -52,7 +52,7 @@ public:
     /**
      * @brief Returns the length of the spline as measured along its curve.
      */
-    [[nodiscard]] float length() const noexcept
+    [[nodiscard]] double length() const noexcept
     {
         return m_arc_offsets.back();
     }
@@ -61,7 +61,7 @@ public:
      * @brief Returns the length of the spline at one of its points.
      * @param point_index index of the point. Must be in the range <em>[0, points().size())</em>
      */
-    [[nodiscard]] float length_at(std::size_t point_index) const noexcept;
+    [[nodiscard]] double length_at(std::size_t point_index) const noexcept;
 
     /**
      * @brief Samples the spline at fractional offset @a t along the spline
@@ -75,16 +75,16 @@ public:
      *
      * @param t the position along the spline from 0.0 to 1.0.
      */
-    [[nodiscard]] Vector3 sample(float t) const noexcept;
+    [[nodiscard]] Vector3 sample(double t) const noexcept;
 
 private:
     // Definition of a cubic polynomial defined as y = a + b*x + c*x^2 + d*x^3.
     // It is valid for x in [0,1].
     struct Polynomial
     {
-        float a, b, c, d;
+        double a, b, c, d;
 
-        [[nodiscard]] float sample(float x) const noexcept;
+        [[nodiscard]] double sample(double x) const noexcept;
     };
 
     class Polynomials
@@ -103,10 +103,10 @@ private:
          * @param index     polynomial to sample
          * @param u_from    input coordinate to sample the polynomial at.
          */
-        [[nodiscard]] Vector3 sample(std::size_t index, float u) const noexcept;
+        [[nodiscard]] Vector3 sample(std::size_t index, double u) const noexcept;
 
     private:
-        static std::vector<Polynomial> calculate_polynomials(gsl::span<const float> points);
+        static std::vector<Polynomial> calculate_polynomials(gsl::span<const double> points);
 
         // The n-1 parameterized polynomials for each dimension of the spline.
         // The polynomials are uniformly parameterized on [0,1].
@@ -115,7 +115,7 @@ private:
         std::vector<Polynomial> m_polynomials_z;
     };
 
-    [[nodiscard]] static std::vector<float>
+    [[nodiscard]] static std::vector<double>
     calculate_arc_offsets(const Polynomials& polynomials) noexcept;
 
     /**
@@ -125,13 +125,13 @@ private:
      * @param u_from    input coordinate for the left side of the curve segment.
      * @param u_to      input coordinate for the right side of the curve segment.
      */
-    [[nodiscard]] static float arc_length(const Polynomials& polynomials, std::size_t index,
-                                          float u_from, float u_to) noexcept;
+    [[nodiscard]] static double arc_length(const Polynomials& polynomials, std::size_t index,
+                                           double u_from, double u_to) noexcept;
 
     Polynomials m_polynomials;
 
     // (Approximated) arc offsets from the start of the spline to the end of each polynomial
-    std::vector<float> m_arc_offsets;
+    std::vector<double> m_arc_offsets;
 
     // Copy of the input points
     std::vector<Vector3> m_points;

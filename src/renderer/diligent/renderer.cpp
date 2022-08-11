@@ -25,13 +25,13 @@ constexpr khepri::log::Logger LOG("diligent");
 
 struct InstanceConstantBuffer
 {
-    Matrix world;
-    Matrix world_inv;
+    Matrixf world;
+    Matrixf world_inv;
 };
 
 struct ViewConstantBuffer
 {
-    Matrix view_proj;
+    Matrixf view_proj;
 };
 
 CULL_MODE to_cull_mode(MaterialDesc::CullMode cull_mode) noexcept
@@ -737,17 +737,17 @@ void Renderer::render_sprites(gsl::span<const Sprite> sprites, khepri::renderer:
                  i += VERTICES_PER_SPRITE, ++sprite_index) {
                 const auto& sprite = sprites[sprite_index];
                 vertices[i + 0].position =
-                    Vector3(sprite.position_top_left.x, sprite.position_top_left.y, 0);
+                    Vector3f(sprite.position_top_left.x, sprite.position_top_left.y, 0);
                 vertices[i + 1].position =
-                    Vector3(sprite.position_bottom_right.x, sprite.position_top_left.y, 0);
+                    Vector3f(sprite.position_bottom_right.x, sprite.position_top_left.y, 0);
                 vertices[i + 2].position =
-                    Vector3(sprite.position_bottom_right.x, sprite.position_bottom_right.y, 0);
+                    Vector3f(sprite.position_bottom_right.x, sprite.position_bottom_right.y, 0);
                 vertices[i + 3].position =
-                    Vector3(sprite.position_top_left.x, sprite.position_bottom_right.y, 0);
-                vertices[i + 0].uv = Vector2(sprite.uv_top_left.x, sprite.uv_top_left.y);
-                vertices[i + 1].uv = Vector2(sprite.uv_bottom_right.x, sprite.uv_top_left.y);
-                vertices[i + 2].uv = Vector2(sprite.uv_bottom_right.x, sprite.uv_bottom_right.y);
-                vertices[i + 3].uv = Vector2(sprite.uv_top_left.x, sprite.uv_bottom_right.y);
+                    Vector3f(sprite.position_top_left.x, sprite.position_bottom_right.y, 0);
+                vertices[i + 0].uv = Vector2f(sprite.uv_top_left.x, sprite.uv_top_left.y);
+                vertices[i + 1].uv = Vector2f(sprite.uv_bottom_right.x, sprite.uv_top_left.y);
+                vertices[i + 2].uv = Vector2f(sprite.uv_bottom_right.x, sprite.uv_bottom_right.y);
+                vertices[i + 3].uv = Vector2f(sprite.uv_top_left.x, sprite.uv_bottom_right.y);
             }
         }
 

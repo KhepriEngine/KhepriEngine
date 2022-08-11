@@ -9,33 +9,33 @@
 
 namespace khepri::io {
 
-/// Specialization of #khepri::io::SerializeTraits for #khepri::Vector2
-template <>
-struct SerializeTraits<Vector2>
+/// Specialization of #khepri::io::SerializeTraits for #khepri::BasicVector2
+template <typename T>
+struct SerializeTraits<BasicVector2<T>>
 {
     /// \see #khepri::io::SerializeTraits::serialize
-    static void serialize(Serializer& s, const Vector2& value)
+    static void serialize(Serializer& s, const BasicVector2<T>& value)
     {
         s.write(value.x);
         s.write(value.y);
     }
 
     /// \see #khepri::io::SerializeTraits::deserialize
-    static Vector2 deserialize(Deserializer& d)
+    static BasicVector2<T> deserialize(Deserializer& d)
     {
-        Vector2 v;
-        v.x = d.read<Vector2::ComponentType>();
-        v.y = d.read<Vector2::ComponentType>();
+        BasicVector2<T> v;
+        v.x = d.read<BasicVector2<T>::ComponentType>();
+        v.y = d.read<BasicVector2<T>::ComponentType>();
         return v;
     }
 };
 
-/// Specialization of #khepri::io::SerializeTraits for #khepri::Vector3
-template <>
-struct SerializeTraits<Vector3>
+/// Specialization of #khepri::io::SerializeTraits for #khepri::BasicVector3
+template <typename T>
+struct SerializeTraits<BasicVector3<T>>
 {
     /// \see #khepri::io::SerializeTraits::serialize
-    static void serialize(Serializer& s, const Vector3& value)
+    static void serialize(Serializer& s, const BasicVector3<T>& value)
     {
         s.write(value.x);
         s.write(value.y);
@@ -43,22 +43,22 @@ struct SerializeTraits<Vector3>
     }
 
     /// \see #khepri::io::SerializeTraits::deserialize
-    static Vector3 deserialize(Deserializer& d)
+    static BasicVector3<T> deserialize(Deserializer& d)
     {
-        Vector3 v;
-        v.x = d.read<Vector3::ComponentType>();
-        v.y = d.read<Vector3::ComponentType>();
-        v.z = d.read<Vector3::ComponentType>();
+        BasicVector3<T> v;
+        v.x = d.read<BasicVector3<T>::ComponentType>();
+        v.y = d.read<BasicVector3<T>::ComponentType>();
+        v.z = d.read<BasicVector3<T>::ComponentType>();
         return v;
     }
 };
 
-/// Specialization of #khepri::io::SerializeTraits for #khepri::Vector4
-template <>
-struct SerializeTraits<Vector4>
+/// Specialization of #khepri::io::SerializeTraits for #khepri::BasicVector4
+template <typename T>
+struct SerializeTraits<BasicVector4<T>>
 {
     /// \see #khepri::io::SerializeTraits::serialize
-    static void serialize(Serializer& s, const Vector4& value)
+    static void serialize(Serializer& s, const BasicVector4<T>& value)
     {
         s.write(value.x);
         s.write(value.y);
@@ -67,13 +67,13 @@ struct SerializeTraits<Vector4>
     }
 
     /// \see #khepri::io::SerializeTraits::deserialize
-    static Vector4 deserialize(Deserializer& d)
+    static BasicVector4<T> deserialize(Deserializer& d)
     {
-        Vector4 v;
-        v.x = d.read<Vector4::ComponentType>();
-        v.y = d.read<Vector4::ComponentType>();
-        v.z = d.read<Vector4::ComponentType>();
-        v.w = d.read<Vector4::ComponentType>();
+        BasicVector4<T> v;
+        v.x = d.read<BasicVector4<T>::ComponentType>();
+        v.y = d.read<BasicVector4<T>::ComponentType>();
+        v.z = d.read<BasicVector4<T>::ComponentType>();
+        v.w = d.read<BasicVector4<T>::ComponentType>();
         return v;
     }
 };

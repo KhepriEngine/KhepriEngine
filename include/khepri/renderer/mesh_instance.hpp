@@ -32,7 +32,7 @@ struct MeshInstance
     Mesh* mesh{nullptr};
 
     /// The transformation matrix for this instance
-    Matrix transform;
+    Matrixf transform;
 
     /// The material to render this instance with
     Material* material{nullptr};

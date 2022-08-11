@@ -34,21 +34,21 @@ public:
         Vector3 position{}; ///< The world-space position of the camera
         Vector3 target{};   ///< The world-space vector of the target of the camera
         Vector3 up{};       ///< The world-space vector corresponding to 'up' on the camera
-        float   fov{};      ///< Vertical field of view in radians (perspective cameras only)
-        float   width{};    ///< Width, in world units, of the camera (orthographic cameras only)
-        float   aspect{};   ///< Aspect ratio (Width / Height) of the render viewport
-        float   znear{};    ///< Distance, in camera-space units, of the near clip plane
-        float   zfar{};     ///< Distance, in camera-space units, of the far clip plane
+        double  fov{};      ///< Vertical field of view in radians (perspective cameras only)
+        double  width{};    ///< Width, in world units, of the camera (orthographic cameras only)
+        double  aspect{};   ///< Aspect ratio (Width / Height) of the render viewport
+        double  znear{};    ///< Distance, in camera-space units, of the near clip plane
+        double  zfar{};     ///< Distance, in camera-space units, of the far clip plane
     };
 
     /// Collection of useful matrices derived from the camera properties
     struct Matrices
     {
-        Matrix view{};          ///< World-to-Camera-space matrix
-        Matrix view_inv{};      ///< inverse of m_view
-        Matrix projection{};    ///< Camera-to-Screen-space matrix
-        Matrix view_proj{};     ///< m_view * m_proj
-        Matrix view_proj_inv{}; ///< inverse of m_view_proj
+        Matrixf view{};          ///< World-to-Camera-space matrix
+        Matrixf view_inv{};      ///< inverse of m_view
+        Matrixf projection{};    ///< Camera-to-Screen-space matrix
+        Matrixf view_proj{};     ///< m_view * m_proj
+        Matrixf view_proj_inv{}; ///< inverse of m_view_proj
     };
 
     /**
@@ -94,31 +94,31 @@ public:
     }
 
     /// Returns the field-of-view angle of the camera (radians)
-    [[nodiscard]] float fov() const noexcept
+    [[nodiscard]] double fov() const noexcept
     {
         return m_properties.fov;
     }
 
     /// Returns the width of the camera surface (in world units)
-    [[nodiscard]] float width() const noexcept
+    [[nodiscard]] double width() const noexcept
     {
         return m_properties.width;
     }
 
     /// Returns the aspect ratio of the camera surface (height / width)
-    [[nodiscard]] float aspect() const noexcept
+    [[nodiscard]] double aspect() const noexcept
     {
         return m_properties.aspect;
     }
 
     /// Returns the distance from the camera position to the near plane (in world units)
-    [[nodiscard]] float znear() const noexcept
+    [[nodiscard]] double znear() const noexcept
     {
         return m_properties.znear;
     }
 
     /// Returns the distance from the camera position to the far plane (in world units)
-    [[nodiscard]] float zfar() const noexcept
+    [[nodiscard]] double zfar() const noexcept
     {
         return m_properties.zfar;
     }
@@ -136,7 +136,7 @@ public:
      * \param[in] world_pos the world position to compute the LOD for
      * \return the LOD (range 0 - 1) for \a world_pos
      */
-    [[nodiscard]] float lod(const Vector3& world_pos) const noexcept;
+    [[nodiscard]] double lod(const Vector3& world_pos) const noexcept;
 
     /**
      * \brief Unprojects a 2D point on the camera surface to two 3D points.

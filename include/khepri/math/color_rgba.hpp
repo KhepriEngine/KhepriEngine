@@ -10,7 +10,7 @@ namespace khepri {
  * This color is in \a linear space, so mathematical operations have the expected result.
  * However, it must be converted to a \ref ColorSRGB before displaying to a user.
  *
- * This class is similar to \ref Vector4, except it describes the semantics of its contents,
+ * This class is similar to \ref BasicVector4, except it describes the semantics of its contents,
  * and it does not provide geometric operations such as \a length, \a dot, etc.
  *
  * \note This class does \a not clamp results after mathematical operations to the [0,1] range.

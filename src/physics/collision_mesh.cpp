@@ -9,14 +9,15 @@ namespace khepri::physics {
 
 namespace {
 // Möller-Trumbore ray/triangle intersection algorithm
-float intersect_distance(const Ray& ray, const Vector3& v0, const Vector3& v1, const Vector3& v2)
+double intersect_distance(const Ray& ray, const Vector3f& v0, const Vector3f& v1,
+                          const Vector3f& v2)
 {
-    Vector3 e1 = v1 - v0;
-    Vector3 e2 = v2 - v0;
+    Vector3f e1 = v1 - v0;
+    Vector3f e2 = v2 - v0;
 
     // Calculate determinant
-    Vector3 h   = cross(ray.direction(), e2);
-    float   det = dot(e1, h);
+    auto h   = cross(ray.direction(), e2);
+    auto det = dot(e1, h);
 
     constexpr auto MAX_PARALLEL_DETERMINANT = 0.00001;
     if (det < MAX_PARALLEL_DETERMINANT) {
@@ -24,26 +25,26 @@ float intersect_distance(const Ray& ray, const Vector3& v0, const Vector3& v1, c
         // If the determinant is close to 0, the ray lies on or parallel to triangle.
         return -1;
     }
-    float inv_det = 1.0F / det;
+    auto inv_det = 1.0 / det;
 
     // First barycentric coordinate (u) of intersection point
-    Vector3 s = ray.start() - v0;
-    float   u = inv_det * dot(s, h);
+    auto s = ray.start() - v0;
+    auto u = inv_det * dot(s, h);
     if (u < 0.0 || u > 1.0) {
         // Intersection is outside the triangle.
         return -1;
     }
 
     // Second barycentric coordinate (v) of intersection point
-    Vector3 q = cross(s, e1);
-    float   v = inv_det * dot(ray.direction(), q);
+    auto q = cross(s, e1);
+    auto v = inv_det * dot(ray.direction(), q);
     if (v < 0.0 || u + v > 1.0) {
         // Intersection is outside the triangle.
         return -1;
     }
 
     // Get the distance along the ray of the intersection point
-    float d = inv_det * dot(e2, q);
+    auto d = inv_det * dot(e2, q);
     if (d < 0.0F) {
         // Intersection lies behind ray starting point
         return -1;
@@ -53,21 +54,21 @@ float intersect_distance(const Ray& ray, const Vector3& v0, const Vector3& v1, c
 }
 } // namespace
 
-CollisionMesh::CollisionMesh(std::vector<Vector3> vertices, std::vector<Index> indices)
+CollisionMesh::CollisionMesh(std::vector<Vector3f> vertices, std::vector<Index> indices)
     : m_vertices(std::move(vertices)), m_indices(std::move(indices))
 {
     assert(m_indices.size() % 3 == 0);
 }
 
-float CollisionMesh::intersect_distance(const Ray& ray) const
+double CollisionMesh::intersect_distance(const Ray& ray) const
 {
     // Unoptimized implementation: iterate through the triangles and find the closest one that
     // intersects
-    float min_distance = std::numeric_limits<float>::max();
-    bool  found        = false;
+    double min_distance = std::numeric_limits<double>::max();
+    bool   found        = false;
 
     for (std::size_t i = 0; i < m_indices.size(); i += 3) {
-        float distance =
+        double distance =
             physics::intersect_distance(ray, m_vertices[m_indices[i + 0]],
                                         m_vertices[m_indices[i + 1]], m_vertices[m_indices[i + 2]]);
 
@@ -77,7 +78,7 @@ float CollisionMesh::intersect_distance(const Ray& ray) const
         }
     }
 
-    return found ? min_distance : -1.0F;
+    return found ? min_distance : -1.0;
 }
 
 bool CollisionMesh::intersect(const Frustum& frustum) const

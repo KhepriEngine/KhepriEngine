@@ -23,19 +23,19 @@ struct MeshDesc final
     struct Vertex
     {
         /// The vertex' position
-        Vector3 position;
+        Vector3f position;
 
         /// The vertex' normal vector
-        Vector3 normal;
+        Vector3f normal;
 
         /// The vertex' tangent vector
-        Vector3 tangent;
+        Vector3f tangent;
 
         /// The vertex' binormal vector
-        Vector3 binormal;
+        Vector3f binormal;
 
         /// The vertex' texture coordinate
-        Vector2 uv;
+        Vector2f uv;
 
         /// The vertex' color
         ColorRGBA color;

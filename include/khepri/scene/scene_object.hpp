@@ -148,7 +148,8 @@ public:
 private:
     void update_transform() noexcept
     {
-        m_transform = Matrix::create_srt(m_scale, m_rotation, m_position);
+        m_transform =
+            Matrixf::create_srt(Vector3f{m_scale}, Quaternionf{m_rotation}, Vector3f{m_position});
     }
 
     const class Behavior* behavior(std::type_index index) const noexcept;
@@ -163,7 +164,7 @@ private:
     Vector3    m_position{0, 0, 0};
     Vector3    m_scale{1, 1, 1};
     Quaternion m_rotation  = Quaternion::IDENTITY;
-    Matrix     m_transform = Matrix::IDENTITY;
+    Matrixf    m_transform = Matrixf::IDENTITY;
 
     std::unordered_map<std::type_index, std::unique_ptr<Behavior>> m_behaviors;
 

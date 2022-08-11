@@ -2,41 +2,99 @@
 
 #include "math.hpp"
 
+#include <khepri/utility/type_traits.hpp>
+
 #include <gsl/gsl-lite.hpp>
 
 #include <cassert>
 #include <cmath>
+#include <type_traits>
 
 namespace khepri {
 
-class Vector3;
-class Vector4;
+template <typename ComponentT>
+class BasicVector3;
 
-/// \brief A 2-component vector
+template <typename ComponentT>
+class BasicVector4;
+
+/**
+ * \brief A 2-component vector.
+ *
+ * A vector is a displacement in a Euclidian space. Unlike a \see point, a vector has a magnitude
+ * and a direction. As such, a vector supports operation such as getting the angle between two
+ * vectors, getting a vector's length, rotating a vector, and so on.
+ *
+ * Vectors and points can be converted by explicitly casting from one to the other.
+ *
+ * \tparam ComponentT specifies the type the vector's components (default = double).
+ */
 #pragma pack(push, 1)
-class Vector2 final
+template <typename ComponentT = double>
+class BasicVector2 final
 {
 public:
     /// The type of the vector's components
-    using ComponentType = float;
+    using ComponentType = ComponentT;
 
     ComponentType x{}; ///< The vector's X element
     ComponentType y{}; ///< The vector's Y element
 
     /// Constructs an uninitialized vector
-    constexpr Vector2() noexcept = default;
+    constexpr BasicVector2() noexcept = default;
 
     /// Constructs the vector from literal floats
-    constexpr Vector2(ComponentType fx, ComponentType fy) noexcept : x(fx), y(fy) {}
+    constexpr BasicVector2(ComponentType fx, ComponentType fy) noexcept : x(fx), y(fy) {}
 
-    /// Constructs the vector from a vector3 by throwing away the Z component
-    explicit constexpr Vector2(const Vector3& v) noexcept;
+    /// Implicitly constructs the vector from another vector with a non-narrowing-convertible
+    /// component
+    template <typename U,
+              typename std::enable_if_t<std::is_convertible_v<U, ComponentType> &&
+                                            !is_narrowing_conversion_v<U, ComponentType>,
+                                        void*> = nullptr>
+    constexpr BasicVector2(const BasicVector2<U>& v) : x(ComponentType{v.x}), y(ComponentType{v.y})
+    {}
 
-    /// Constructs the vector from a vector4 by throwing away the Z and W components
-    explicit constexpr Vector2(const Vector4& v) noexcept;
+    /// Explicitly constructs the vector from another vector with a narrowing-convertible component
+    /// type
+    template <typename U, typename std::enable_if_t<std::is_convertible_v<U, ComponentType> &&
+                                                        is_narrowing_conversion_v<U, ComponentType>,
+                                                    void*> = nullptr>
+    explicit constexpr BasicVector2(const BasicVector2<U>& v) : x(v.x), y(v.y)
+    {}
+
+    /// Implicitly constructs the vector from a BasicVector3 with a non-narrowing-convertible
+    /// component type by throwing away the Z component.
+    template <typename U,
+              typename std::enable_if_t<std::is_convertible_v<U, ComponentType> &&
+                                            !is_narrowing_conversion_v<U, ComponentType>,
+                                        void*> = nullptr>
+    constexpr BasicVector2(const BasicVector3<U>& v);
+
+    /// Explicitly constructs the vector from a BasicVector3 with a narrowing-convertible component
+    /// type by throwing away the Z component.
+    template <typename U, typename std::enable_if_t<std::is_convertible_v<U, ComponentType> &&
+                                                        is_narrowing_conversion_v<U, ComponentType>,
+                                                    void*> = nullptr>
+    explicit constexpr BasicVector2(const BasicVector3<U>& v);
+
+    /// Implicitly constructs the vector from a BasicVector4 with a non-narrowing-convertible
+    /// component type by throwing away the Z and W components.
+    template <typename U,
+              typename std::enable_if_t<std::is_convertible_v<U, ComponentType> &&
+                                            !is_narrowing_conversion_v<U, ComponentType>,
+                                        void*> = nullptr>
+    constexpr BasicVector2(const BasicVector4<U>& v);
+
+    /// Explicitly constructs the vector from a BasicVector4 with a narrowing-convertible component
+    /// type by throwing away the Z and W components.
+    template <typename U, typename std::enable_if_t<std::is_convertible_v<U, ComponentType> &&
+                                                        is_narrowing_conversion_v<U, ComponentType>,
+                                                    void*> = nullptr>
+    explicit constexpr BasicVector2(const BasicVector4<U>& v);
 
     /// Adds vector \a v to the vector
-    Vector2& operator+=(const Vector2& v) noexcept
+    BasicVector2& operator+=(const BasicVector2& v) noexcept
     {
         x += v.x;
         y += v.y;
@@ -44,7 +102,7 @@ public:
     }
 
     /// Subtracts vector \a v from the vector
-    Vector2& operator-=(const Vector2& v) noexcept
+    BasicVector2& operator-=(const BasicVector2& v) noexcept
     {
         x -= v.x;
         y -= v.y;
@@ -52,7 +110,7 @@ public:
     }
 
     /// Scales the vector by \a s
-    Vector2& operator*=(float s) noexcept
+    BasicVector2& operator*=(ComponentType s) noexcept
     {
         x *= s;
         y *= s;
@@ -60,7 +118,7 @@ public:
     }
 
     /// Scales the vector with 1.0 / \a s
-    Vector2& operator/=(float s) noexcept
+    BasicVector2& operator/=(ComponentType s) noexcept
     {
         x /= s;
         y /= s;
@@ -107,7 +165,8 @@ public:
     }
 
     /// Calculates the distance between the vector and vector \a v
-    [[nodiscard]] ComponentType distance(const Vector2& v) const noexcept
+    template <typename U>
+    [[nodiscard]] auto distance(const BasicVector2<U>& v) const noexcept
     {
         const auto dx = v.x - x;
         const auto dy = v.y - y;
@@ -120,7 +179,8 @@ public:
      * Calculating the squared distance (distance*distance) is a considerably faster operation so
      * use it whenever possible (e.g., when comparing distances)
      */
-    [[nodiscard]] ComponentType distance_sq(const Vector2& v) const noexcept
+    template <typename U>
+    [[nodiscard]] auto distance_sq(const BasicVector2<U>& v) const noexcept
     {
         const auto dx = v.x - x;
         const auto dy = v.y - y;
@@ -134,13 +194,15 @@ public:
     }
 
     /// Calculates the dot product between the vector and vector \a v
-    [[nodiscard]] ComponentType dot(const Vector2& v) const noexcept
+    template <typename U>
+    [[nodiscard]] auto dot(const BasicVector2<U>& v) const noexcept
     {
         return x * v.x + y * v.y;
     }
 
     /// Calculates the cross product between the vector and vector \a v
-    [[nodiscard]] ComponentType cross(const Vector2& v) const noexcept
+    template <typename U>
+    [[nodiscard]] auto cross(const BasicVector2<U>& v) const noexcept
     {
         return x * v.y - y * v.x;
     }
@@ -148,7 +210,7 @@ public:
     /// Normalizes the vector
     void normalize() noexcept
     {
-        ComponentType inv_length = 1.0F / length();
+        auto inv_length = ComponentType{1.0} / length();
         x *= inv_length;
         y *= inv_length;
     }
@@ -161,62 +223,76 @@ public:
     }
 
     /// Constructs a unit vector from an angle with the positive X-axis
-    static Vector2 from_angle(float phi) noexcept
+    static BasicVector2 from_angle(ComponentType phi) noexcept
     {
-        return Vector2(cos(phi), sin(phi));
+        return BasicVector2(cos(phi), sin(phi));
     }
 };
 #pragma pack(pop)
 
+/// 2D vector of doubles
+using Vector2 = BasicVector2<double>;
+
+/// 2D vector floats
+using Vector2f = BasicVector2<float>;
+
 /// Validate that the vector has the expected size, because this type can be directly used in a
 /// mapping to graphics engine's memory.
 static_assert(sizeof(Vector2) == 2 * sizeof(Vector2::ComponentType),
-              "Vector2 does not have the expected size");
+              "BasicVector2 does not have the expected size");
 
 /// Negates vector \a v
-inline Vector2 operator-(const Vector2& v) noexcept
+template <typename T>
+auto operator-(const BasicVector2<T>& v) noexcept
 {
-    return Vector2(-v.x, -v.y);
+    return BasicVector2<T>(-v.x, -v.y);
 }
 
 /// Adds vector \a v2 to vector \a v1
-inline Vector2 operator+(const Vector2& v1, const Vector2& v2) noexcept
+template <typename T, typename U>
+auto operator+(const BasicVector2<T>& v1, const BasicVector2<U>& v2) noexcept
 {
-    return Vector2(v1.x + v2.x, v1.y + v2.y);
+    return BasicVector2<std::common_type_t<T, U>>(v1.x + v2.x, v1.y + v2.y);
 }
 
 /// Subtracts vector \a v2 from vector \a v1
-inline Vector2 operator-(const Vector2& v1, const Vector2& v2) noexcept
+template <typename T, typename U>
+auto operator-(const BasicVector2<T>& v1, const BasicVector2<U>& v2) noexcept
 {
-    return Vector2(v1.x - v2.x, v1.y - v2.y);
+    return BasicVector2<std::common_type_t<T, U>>(v1.x - v2.x, v1.y - v2.y);
 }
 
 /// Scales vector \a v with scalar \a s
-inline Vector2 operator*(const Vector2& v, float s) noexcept
+template <typename T, typename U>
+auto operator*(const BasicVector2<T>& v, U s) noexcept
 {
-    return Vector2(v.x * s, v.y * s);
+    return BasicVector2<std::common_type_t<T, U>>(v.x * s, v.y * s);
 }
 
 /// Scales vector \a v with scalar \a s
-inline Vector2 operator*(float s, const Vector2& v) noexcept
+template <typename T, typename U>
+auto operator*(T s, const BasicVector2<U>& v) noexcept
 {
-    return Vector2(v.x * s, v.y * s);
+    return BasicVector2<std::common_type_t<T, U>>(v.x * s, v.y * s);
 }
 
 /// Scales vector \a v with scalar 1/\a s
-inline Vector2 operator/(const Vector2& v, float s) noexcept
+template <typename T, typename U>
+auto operator/(const BasicVector2<T>& v, U s) noexcept
 {
-    return Vector2(v.x / s, v.y / s);
+    return BasicVector2<std::common_type_t<T, U>>(v.x / s, v.y / s);
 }
 
 /// Multiplies vector \a v1 with vector \a v2, component-wise
-inline Vector2 operator*(const Vector2& v1, const Vector2& v2) noexcept
+template <typename T, typename U>
+auto operator*(const BasicVector2<T>& v1, const BasicVector2<U>& v2) noexcept
 {
-    return Vector2(v1.x * v2.x, v1.y * v2.y);
+    return BasicVector2<std::common_type_t<T, U>>(v1.x * v2.x, v1.y * v2.y);
 }
 
 /// Calculates the distance between the points identified by vector \a v1 and vector \a v2
-inline float distance(const Vector2& v1, const Vector2& v2) noexcept
+template <typename T, typename U>
+auto distance(const BasicVector2<T>& v1, const BasicVector2<U>& v2) noexcept
 {
     return v1.distance(v2);
 }
@@ -228,28 +304,32 @@ inline float distance(const Vector2& v1, const Vector2& v2) noexcept
  * Calculating the squared distance (distance*distance) is a considerably faster operation so
  * use it whenever possible (e.g., when comparing distances)
  */
-inline float distance_sq(const Vector2& v1, const Vector2& v2) noexcept
+template <typename T, typename U>
+auto distance_sq(const BasicVector2<T>& v1, const BasicVector2<U>& v2) noexcept
 {
     return v1.distance_sq(v2);
 }
 
 /// Calculates the dot product between vector \a v1 and vector \a v2
-inline float dot(const Vector2& v1, const Vector2& v2) noexcept
+template <typename T, typename U>
+auto dot(const BasicVector2<T>& v1, const BasicVector2<U>& v2) noexcept
 {
     return v1.dot(v2);
 }
 
 /// Calculates the cross product between vector \a v1 and vector \a v2
-inline float cross(const Vector2& v1, const Vector2& v2) noexcept
+template <typename T, typename U>
+auto cross(const BasicVector2<T>& v1, const BasicVector2<U>& v2) noexcept
 {
     return v1.cross(v2);
 }
 
 /// Normalizes vector \a v
-inline Vector2 normalize(const Vector2& v) noexcept
+template <typename T>
+auto normalize(const BasicVector2<T>& v) noexcept
 {
-    float invL = 1.0F / v.length();
-    return Vector2(v.x * invL, v.y * invL);
+    auto invL = T{1.0} / v.length();
+    return BasicVector2<T>(v.x * invL, v.y * invL);
 }
 
 /**
@@ -261,11 +341,12 @@ inline Vector2 normalize(const Vector2& v) noexcept
  * \param angle the angle to rotate by, in radians.
  * \return the rotated vector
  */
-inline Vector2 rotate(const Vector2& v, float angle) noexcept
+template <typename T, typename U>
+auto rotate(const BasicVector2<T>& v, U angle) noexcept
 {
-    const auto s = std::sin(angle);
-    const auto c = std::cos(angle);
-    return {c * v.x - s * v.y, s * v.x + c * v.y};
+    const T s = std::sin(angle);
+    const T c = std::cos(angle);
+    return BasicVector2<T>{c * v.x - s * v.y, s * v.x + c * v.y};
 }
 
 /**
@@ -281,10 +362,27 @@ inline Vector2 rotate(const Vector2& v, float angle) noexcept
  *
  * \return \a val, with each component clamped between \a min and \a max.
  */
-constexpr Vector2 clamp(const Vector2& val, Vector2::ComponentType min,
-                        Vector2::ComponentType max) noexcept
+template <typename T, typename U>
+constexpr auto clamp(const BasicVector2<T>& val, U min, U max) noexcept
 {
-    return {clamp(val.x, min, max), clamp(val.y, min, max)};
+    return BasicVector2<T>{clamp(val.x, min, max), clamp(val.y, min, max)};
+}
+
+/**
+ * \brief Clamps each component of a vector between 0 and 1
+ *
+ * Returns \a 0 if \a val.{x,y} < \a 0.
+ * Returns \a 1 if \a val.{x,y} > \a 1.
+ * Otherwise, returns \a val.{x,y}.
+ *
+ * \param[in] val the value to clamp
+ *
+ * \return \a val clamped between 0 and 1.
+ */
+template <typename T>
+constexpr auto saturate(const BasicVector2<T>& val) noexcept
+{
+    return clamp(val, T{0}, T{1});
 }
 
 } // namespace khepri

@@ -9,14 +9,14 @@ namespace khepri::renderer {
 Camera::Matrices Camera::create_matrices(const Properties& properties) noexcept
 {
     Matrices matrices;
-    matrices.view =
-        Matrix::create_look_at_view(properties.position, properties.target, properties.up);
+    matrices.view = Matrixf::create_look_at_view(
+        Vector3f{properties.position}, Vector3f{properties.target}, Vector3f{properties.up});
     matrices.projection =
         (properties.type == Type::orthographic)
-            ? Matrix::create_orthographic_projection(properties.width, properties.aspect,
-                                                     properties.znear, properties.zfar)
-            : Matrix::create_perspective_projection(properties.fov, properties.aspect,
-                                                    properties.znear, properties.zfar);
+            ? Matrixf::create_orthographic_projection(properties.width, properties.aspect,
+                                                      properties.znear, properties.zfar)
+            : Matrixf::create_perspective_projection(properties.fov, properties.aspect,
+                                                     properties.znear, properties.zfar);
     matrices.view_proj     = matrices.view * matrices.projection;
     matrices.view_inv      = inverse(matrices.view);
     matrices.view_proj_inv = inverse(matrices.view_proj);
@@ -33,9 +33,9 @@ Frustum Camera::frustum(const Vector2& p1, const Vector2& p2) const noexcept
 {
     // Constructs a side plane from its coordinates on the near plane (-1 <= x,y <= 1)
     // The @orthogonal_view_dir lies in the plane, orthogonal to the view direction.
-    const auto create_side_plane = [&](float x, float y, const Vector3& orthogonal_view_dir) {
-        Vector3 near_position = m_matrices.view_proj_inv.transform_coord({x, y, 0.0F});
-        Vector3 far_position  = m_matrices.view_proj_inv.transform_coord({x, y, 1.0F});
+    const auto create_side_plane = [&](double x, double y, const Vector3& orthogonal_view_dir) {
+        Vector3 near_position = m_matrices.view_proj_inv.transform_coord(Vector3{x, y, 0.0});
+        Vector3 far_position  = m_matrices.view_proj_inv.transform_coord(Vector3{x, y, 1.0});
         Vector3 inside_dir    = normalize(cross(far_position - near_position, orthogonal_view_dir));
         return Plane(near_position, inside_dir);
     };
@@ -63,12 +63,12 @@ Frustum Camera::frustum(const Vector2& p1, const Vector2& p2) const noexcept
 std::tuple<Vector3, Vector3> Camera::unproject(const Vector2& coords) const noexcept
 {
     return {
-        m_matrices.view_proj_inv.transform_coord({coords, 0.0F}), // Near
-        m_matrices.view_proj_inv.transform_coord({coords, 1.0F})  // far
+        m_matrices.view_proj_inv.transform_coord(Vector3{coords, 0.0}), // Near
+        m_matrices.view_proj_inv.transform_coord(Vector3{coords, 1.0})  // far
     };
 }
 
-float Camera::lod(const Vector3& world_pos) const noexcept
+double Camera::lod(const Vector3& world_pos) const noexcept
 {
     // The LOD is just the Z-position in the view frustum
     // (but inverted: 1 is near plane, 0 is far plane)

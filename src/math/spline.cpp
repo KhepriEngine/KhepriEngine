@@ -10,14 +10,14 @@
 
 namespace khepri {
 
-float CubicSpline::Polynomial::sample(float x) const noexcept
+double CubicSpline::Polynomial::sample(double x) const noexcept
 {
     assert(x >= 0 && x <= 1);
     return a + (b + (c + d * x) * x) * x;
 }
 
 std::vector<CubicSpline::Polynomial>
-CubicSpline::Polynomials::calculate_polynomials(gsl::span<const float> points)
+CubicSpline::Polynomials::calculate_polynomials(gsl::span<const double> points)
 {
     if (points.size() < 2) {
         throw khepri::ArgumentError();
@@ -108,17 +108,17 @@ CubicSpline::Polynomials::calculate_polynomials(gsl::span<const float> points)
     // Run Thomas' algorithm
 
     // The new superdiagonal elements
-    std::vector<float> superd(points.size() - 1);
+    std::vector<double> superd(points.size() - 1);
 
     // The result elements of the expression (the knowns).
     // This will also hold the computed unknowns during the backpropagation step.
-    std::vector<float> result(points.size());
+    std::vector<double> result(points.size());
 
     superd.front() = result.front() = 0;
     for (std::size_t i = 1; i < superd.size(); ++i) {
-        float result_i = 3 * (points[i - 1] - 2 * points[i] + points[i + 1]);
-        superd[i]      = 1.0 / (4.0f - superd[i - 1]);
-        result[i]      = (result_i - result[i - 1]) * superd[i];
+        double result_i = 3 * (points[i - 1] - 2 * points[i] + points[i + 1]);
+        superd[i]       = 1.0 / (4.0f - superd[i - 1]);
+        result[i]       = (result_i - result[i - 1]) * superd[i];
     }
 
     // Back-substitute to find the unknown vector with coefficient C for the polynomials
@@ -130,9 +130,9 @@ CubicSpline::Polynomials::calculate_polynomials(gsl::span<const float> points)
     // Construct the polynomials from the coefficients a, b, c and d.
     std::vector<CubicSpline::Polynomial> polynomials(points.size() - 1);
     for (std::size_t i = 0; i < polynomials.size(); ++i) {
-        const float a  = points[i];
-        const float d  = (result[i + 1] - result[i]) / 3.0;
-        const float b  = points[i + 1] - points[i] - result[i] - d;
+        const double a = points[i];
+        const double d = (result[i + 1] - result[i]) / 3.0;
+        const double b = points[i + 1] - points[i] - result[i] - d;
         polynomials[i] = {a, b, result[i], d};
     }
     return polynomials;
@@ -144,7 +144,7 @@ CubicSpline::Polynomials::Polynomials(gsl::span<const Vector3> points)
     , m_polynomials_z(calculate_polynomials(pluck(points, &Vector3::z)))
 {}
 
-Vector3 CubicSpline::Polynomials::sample(std::size_t index, float u) const noexcept
+Vector3 CubicSpline::Polynomials::sample(std::size_t index, double u) const noexcept
 {
     assert(m_polynomials_x.size() == m_polynomials_y.size());
     assert(m_polynomials_y.size() == m_polynomials_z.size());
@@ -167,8 +167,8 @@ CubicSpline::CubicSpline(std::initializer_list<Vector3> points)
     : CubicSpline({points.begin(), points.end()})
 {}
 
-float CubicSpline::arc_length(const Polynomials& polynomials, std::size_t index, float u_from,
-                              float u_to) noexcept
+double CubicSpline::arc_length(const Polynomials& polynomials, std::size_t index, double u_from,
+                               double u_to) noexcept
 {
     // This method finds the arc length by recursive division:
     // We divide the curve in two (half-way between u_from and u_to) and get the
@@ -211,9 +211,9 @@ float CubicSpline::arc_length(const Polynomials& polynomials, std::size_t index,
            arc_length(polynomials, index, u_mid, u_to);
 }
 
-std::vector<float> CubicSpline::calculate_arc_offsets(const Polynomials& polynomials) noexcept
+std::vector<double> CubicSpline::calculate_arc_offsets(const Polynomials& polynomials) noexcept
 {
-    std::vector<float> arc_offsets(polynomials.size());
+    std::vector<double> arc_offsets(polynomials.size());
     arc_offsets[0] = arc_length(polynomials, 0, 0.0f, 1.0f);
     for (std::size_t i = 1; i < arc_offsets.size(); ++i) {
         arc_offsets[i] = arc_offsets[i - 1] + arc_length(polynomials, i, 0.0f, 1.0f);
@@ -221,7 +221,7 @@ std::vector<float> CubicSpline::calculate_arc_offsets(const Polynomials& polynom
     return arc_offsets;
 }
 
-[[nodiscard]] float CubicSpline::length_at(std::size_t point_index) const noexcept
+[[nodiscard]] double CubicSpline::length_at(std::size_t point_index) const noexcept
 {
     assert(point_index <= m_arc_offsets.size());
     if (point_index == 0) {
@@ -230,9 +230,9 @@ std::vector<float> CubicSpline::calculate_arc_offsets(const Polynomials& polynom
     return m_arc_offsets[point_index - 1];
 }
 
-Vector3 CubicSpline::sample(float t) const noexcept
+Vector3 CubicSpline::sample(double t) const noexcept
 {
-    t = clamp(t, 0.0f, 1.0f);
+    t = clamp(t, 0.0, 1.0);
 
     // t is in arc length, find the segment that belongs to it
     const auto spline_length = m_arc_offsets.back();
@@ -253,7 +253,7 @@ Vector3 CubicSpline::sample(float t) const noexcept
     // Bound the iterations so we don't end up in an infinite loop due to some floating point
     // rounding oddity.
     constexpr int max_iterations = 100;
-    float         u              = u_start;
+    double        u              = u_start;
     if (arc_offset_end - arc_offset_start > 0.0000001) {
         // Non-degenerate segment
         for (int i = 0; i < max_iterations; ++i) {

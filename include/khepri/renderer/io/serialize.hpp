@@ -20,8 +20,8 @@ struct SerializeTraits<renderer::MeshDesc::Vertex>
     static renderer::MeshDesc::Vertex deserialize(Deserializer& d)
     {
         renderer::MeshDesc::Vertex vertex;
-        vertex.position = d.read<Vector3>();
-        vertex.normal   = d.read<Vector3>();
+        vertex.position = d.read<Vector3f>();
+        vertex.normal   = d.read<Vector3f>();
         return vertex;
     }
 };

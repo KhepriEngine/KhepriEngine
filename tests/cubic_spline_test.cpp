@@ -223,7 +223,7 @@ TEST(CubicSplineTest, SplineWithOnePoint_ThrowsArgumentError)
 TEST(CubicSplineTest, LineSpline_HasCorrectLength)
 {
     static constexpr Vector3 points[] = {{0, 0, 0}, {1, 1, 1}};
-    EXPECT_NEAR(CubicSpline{points}.length(), std::sqrt(3.0f), 0.00000001f);
+    EXPECT_NEAR(CubicSpline{points}.length(), std::sqrt(3.0), 0.00000001f);
 }
 
 class ValidCubicSplineTest : public testing::TestWithParam<std::vector<Vector3>>

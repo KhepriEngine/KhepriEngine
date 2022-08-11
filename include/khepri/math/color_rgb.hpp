@@ -17,7 +17,7 @@ class ColorSRGB;
  * This color is in \a linear space, so mathematical operations have the expected result.
  * However, it must be converted to a \ref ColorSRGB before displaying to a user.
  *
- * This class is similar to \ref Vector3, except it describes the semantics of its contents,
+ * This class is similar to \ref BasicVector3, except it describes the semantics of its contents,
  * and it does not provide geometric operations such as \a length, \a dot, etc.
  *
  * \note This class does \a not clamp results after mathematical operations to the [0,1] range.
@@ -163,10 +163,26 @@ inline ColorRGB operator*(const ColorRGB& c1, const ColorRGB& c2) noexcept
  *
  * \return \a val, with each component clamped between \a min and \a max.
  */
-constexpr ColorRGB clamp(const ColorRGB& col, ColorRGB::ComponentType min,
-                         ColorRGB::ComponentType max) noexcept
+template <typename U>
+constexpr ColorRGB clamp(const ColorRGB& col, U min, U max) noexcept
 {
     return {clamp(col.r, min, max), clamp(col.g, min, max), clamp(col.b, min, max)};
+}
+
+/**
+ * \brief Clamps each component of a color between 0 and 1
+ *
+ * Returns \a 0 if \a val.{r,g,b} < \a 0.
+ * Returns \a 1 if \a val.{r,g,b} > \a 1.
+ * Otherwise, returns \a val.{r,g,b}.
+ *
+ * \param[in] val the value to clamp
+ *
+ * \return \a val clamped between 0 and 1.
+ */
+constexpr ColorRGB saturate(const ColorRGB& val) noexcept
+{
+    return clamp(val, 0.0F, 1.0F);
 }
 
 } // namespace khepri

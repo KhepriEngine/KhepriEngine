@@ -28,7 +28,7 @@ public:
      * Every consecutive set of three indices is a triangle face. Each index in \a indices must
      * be a valid index into \a vertices.
      */
-    CollisionMesh(std::vector<Vector3> vertices, std::vector<Index> indices);
+    CollisionMesh(std::vector<Vector3f> vertices, std::vector<Index> indices);
 
     /**
      * \brief Returns the distance along the ray of the first intersection with this mesh, if
@@ -37,14 +37,14 @@ public:
      * Returns a negative number if there is no intersection or if the origin is inside the
      * collision mesh.
      */
-    [[nodiscard]] float intersect_distance(const Ray& ray) const;
+    [[nodiscard]] double intersect_distance(const Ray& ray) const;
 
     /// Checks if this collision mesh intersects, even partially, the specified frustum.
     [[nodiscard]] bool intersect(const Frustum& frustum) const;
 
 private:
-    std::vector<Vector3> m_vertices;
-    std::vector<Index>   m_indices;
+    std::vector<Vector3f> m_vertices;
+    std::vector<Index>    m_indices;
 };
 
 } // namespace khepri::physics

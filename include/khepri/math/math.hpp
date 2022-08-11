@@ -32,10 +32,10 @@ inline T lerp(const T& v0, const T& v1, float t) noexcept
  *
  * \return \a val clamped between \a min and \a max.
  */
-template <typename T>
-constexpr T clamp(const T& val, const T& min, const T& max) noexcept
+template <typename T, typename U>
+constexpr T clamp(const T& val, const U& min, const U& max) noexcept
 {
-    return (val <= min) ? min : (val >= max) ? max : val;
+    return (val <= min) ? T{min} : (val >= max) ? T{max} : val;
 }
 
 /**
@@ -52,7 +52,7 @@ constexpr T clamp(const T& val, const T& min, const T& max) noexcept
 template <typename T>
 constexpr T saturate(const T& val) noexcept
 {
-    return clamp(val, 0.0F, 1.0F);
+    return clamp<T>(val, T{0}, T{1});
 }
 
 /// Converts degrees to radians

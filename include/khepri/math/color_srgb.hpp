@@ -15,7 +15,7 @@ namespace khepri {
  * order to perform mathematical operations with it.
  *
  * Unlike \ref ColorRGB, this class stores its contents with an 8 bit integer per channel in
- * accordance with most sRGB output channels. This class is similar to \ref Vector3, except it
+ * accordance with most sRGB output channels. This class is similar to \ref BasicVector3, except it
  * describes the semantics of its contents, and it does not provide any mathematical operations.
  *
  * \note This class does \a not clamp results after mathematical operations to the [0,1] range.
@@ -51,11 +51,11 @@ public:
      */
     explicit constexpr ColorSRGB(const ColorRGB& c) noexcept
         : r(static_cast<ComponentType>(linear_to_srgb(saturate(c.r)) *
-                                        std::numeric_limits<ColorSRGB::ComponentType>::max()))
+                                       std::numeric_limits<ColorSRGB::ComponentType>::max()))
         , g(static_cast<ComponentType>(linear_to_srgb(saturate(c.g)) *
-                                        std::numeric_limits<ColorSRGB::ComponentType>::max()))
+                                       std::numeric_limits<ColorSRGB::ComponentType>::max()))
         , b(static_cast<ComponentType>(linear_to_srgb(saturate(c.b)) *
-                                        std::numeric_limits<ColorSRGB::ComponentType>::max()))
+                                       std::numeric_limits<ColorSRGB::ComponentType>::max()))
     {}
 
     /// Indexes the color. 0 is Red, 1 is Green, etc
