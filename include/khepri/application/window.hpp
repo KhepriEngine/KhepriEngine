@@ -44,15 +44,15 @@ public:
     using SizeListener = std::function<void()>;
 
     /// Callback for "cursor position changed" events
-    using CursorPositionListener = std::function<void(const khepri::Point& pos)>;
+    using CursorPositionListener = std::function<void(const khepri::Pointi& pos)>;
 
     /// Callback for "mouse button" events
     using MouseButtonListener =
-        std::function<void(const khepri::Point& pos, MouseButton, MouseButtonAction)>;
+        std::function<void(const khepri::Pointi& pos, MouseButton, MouseButtonAction)>;
 
     /// Callback for "mouse scroll" events
     using MouseScrollListener =
-        std::function<void(const khepri::Point& pos, const khepri::Vector2& scroll_offset)>;
+        std::function<void(const khepri::Pointi& pos, const khepri::Vector2& scroll_offset)>;
 
     /**
      * Constructs the window
@@ -133,7 +133,7 @@ private:
     std::vector<MouseButtonListener>    m_mouse_button_listeners;
     std::vector<MouseScrollListener>    m_mouse_scroll_listeners;
 
-    khepri::Point m_cursor_pos{0, 0};
+    khepri::Pointi m_cursor_pos{0, 0};
 };
 
 } // namespace khepri::application
