@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME}
     src/io/file.cpp
     src/io/stream.cpp
     src/log/log.cpp
+    src/math/interpolator.cpp
     src/math/spline.cpp
     src/physics/collision_mesh.cpp
     src/renderer/io/kmf.cpp
@@ -104,8 +105,10 @@ if (BUILD_TESTING)
     include(GoogleTest)
 
     add_executable(${PROJECT_NAME}Tests
-        tests/version_test.cpp
         tests/cubic_spline_test.cpp
+        tests/interpolator_test.cpp
+        tests/polynomial_test.cpp
+        tests/version_test.cpp
     )
 
     target_link_Libraries(${PROJECT_NAME}Tests

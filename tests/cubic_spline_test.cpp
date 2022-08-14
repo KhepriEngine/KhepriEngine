@@ -1,3 +1,5 @@
+#include "printers.hpp"
+
 #include <khepri/exceptions.hpp>
 #include <khepri/math/spline.hpp>
 #include <khepri/utility/string.hpp>
@@ -13,11 +15,6 @@ using testing::TestWithParam;
 using testing::Values;
 
 namespace khepri {
-std::ostream& operator<<(std::ostream& os, const Vector3& v)
-{
-    return os << "{" << v.x << "," << v.y << "," << v.z << "}";
-}
-
 std::ostream& operator<<(std::ostream& os, const CubicSpline& c)
 {
     return os << "spline through [" << khepri::join(c.points(), ", ") << "]";

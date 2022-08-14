@@ -73,4 +73,10 @@ constexpr T to_degrees(const T& radians) noexcept
     return radians / T{PI} * DEGREES_PER_PI_RADIANS;
 }
 
+/// Returns whether the difference between \a lhs and \a rhs is at most \a abs_error
+[[nodiscard]] inline bool near(float lhs, float rhs, float abs_error) noexcept
+{
+    return std::abs(lhs - rhs) <= abs_error;
+}
+
 } // namespace khepri
