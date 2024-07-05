@@ -38,13 +38,15 @@ class KhepriEngineConan(ConanFile):
     generators = "CMakeDeps"
 
     def requirements(self):
+        # Public dependencies
+        self.requires("fmt/9.0.0", transitive_headers=True)
+        self.requires("gsl-lite/0.36.0", transitive_headers=True)
+        # Private dependencies
         self.requires("assimp/[>=5.0 <6.0]")
         self.requires("cxxopts/[>=2.0 <3.0]")
         self.requires("diligent-core/2.5.1")
-        self.requires("fmt/9.0.0")
         self.requires("freetype/[>=2.0 <3.0]")
         self.requires("glfw/[>=3.0 <4.0]")
-        self.requires("gsl-lite/0.36.0")
 
     def build_requirements(self):
         self.test_requires("gtest/[>=1.0 <2.0]")
