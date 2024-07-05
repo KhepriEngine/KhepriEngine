@@ -4,11 +4,10 @@
 #include <khepri/math/size.hpp>
 #include <khepri/math/vector2.hpp>
 
-#include <GLFW/glfw3.h>
-
+#include <any>
 #include <functional>
+#include <memory>
 #include <string>
-#include <vector>
 
 namespace khepri::application {
 
@@ -67,8 +66,10 @@ public:
 
     /**
      * Returns the native handle of this window.
+     * The returned type depends on the target platform:
+     * - Windows: a HWND is returned.
      */
-    [[nodiscard]] void* native_handle() const;
+    [[nodiscard]] std::any native_handle() const;
 
     /**
      * Returns the size of the render area.
@@ -122,18 +123,9 @@ s     * vertical scroll is passed along.
     static void poll_events();
 
 private:
-    static void framebuffer_size_changed(GLFWwindow* window, int width, int height);
-    static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
-    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-    static void mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+    class Impl;
 
-    GLFWwindow*                         m_window;
-    std::vector<SizeListener>           m_size_listeners;
-    std::vector<CursorPositionListener> m_cursor_position_listeners;
-    std::vector<MouseButtonListener>    m_mouse_button_listeners;
-    std::vector<MouseScrollListener>    m_mouse_scroll_listeners;
-
-    khepri::Pointi m_cursor_pos{0, 0};
+    std::unique_ptr<Impl> m_impl;
 };
 
 } // namespace khepri::application

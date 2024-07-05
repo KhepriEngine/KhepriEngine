@@ -35,6 +35,7 @@ add_library(${PROJECT_NAME}
     src/renderer/io/shader.cpp
     src/renderer/camera.cpp
     src/renderer/model.cpp
+    src/renderer/diligent/native_window.cpp
     src/renderer/diligent/renderer.cpp
     src/scene/scene_object.cpp
     src/utility/string.cpp
