@@ -15,10 +15,20 @@ Please consider the following before creating a new issue:
 The following section is for people who wish to contribute by making changes to the software.
 
 ### Development environment
-The project's main development environment is Linux (and WSL: Windows Subsystem for Linux).
+The project's main development environment is Windows, using [Conan](https://conan.io/) for package management and [Visual Studio](https://visualstudio.microsoft.com/) as compiler.
+
+### Requirements
+
+Contributing to Khepri requires:
+* a C++17-capable compiler (Visual Studio is recommended on Windows)
+* [Conan](https://conan.io/) 2.5 or newer.
+* [CMake](https://cmake.org/) 3.23 or newer.
+* [Doxygen](https://www.doxygen.nl/).
+* [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) 12.
+* [ClangTidy](https://clang.llvm.org/extra/clang-tidy/) 10.
 
 ### Checking out the code
-Where possible, this project's dependencies are pulled in via Git submodules. When cloning the repository, please use `git clone --recursive` to ensure all submodules are properly initialized.
+To start, first clone the repository using `git clone`.
 
 ### Installing Git hooks
 Every PR is checked for certain code quality criteria. Some of these checks are also available as Git pre-commit hooks. It is recommended to install them after checking out the code:
@@ -37,10 +47,38 @@ Make sure to update the submodule reference after the submodule change has been 
 ### Coding standards
 Please refer to the [Coding standards](CODING_STANDARDS.md).
 
-### Pull Requests
+### Build the code
+Building uses Conan to automatically install all required dependencies and set up CMake presets:
+```
+conan install . -s build_type=Release -of build-release
+cmake --preset conan-default
+cmake --build --preset conan-release
+```
+Or, to work with a debug build:
+```
+conan install . -s "&:build_type=Debug" -s build_type=Release -of build-debug
+cmake --preset conan-default
+cmake --build --preset conan-debug
+```
+This will build Khepri in Debug mode, but use Release builds for its dependencies.
+
+### Run tests
+After building, run the tests with CTest:
+```
+ctest --preset conan-release
+```
+Or, for the debug build:
+```
+ctest --preset conan-debug
+```
+
+### Create a Pull Request
+After you made your changes and made sure all tests (both old and new) pass, you can commit your code with `git commit`, push it and create a pull request.
+
 Follow the following rules:
 * Only do one thing per pull request: either fix a bug, refactor code, improve performance, implement a new feature, etc. Do not combine multiple of these activities in a single pull request.
 * **Squash** your changes into a single commit. This reduces noise in the repository history.
+* This project requires [signed commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
 * Format your commit message according to [Conventional Commits](https://www.conventionalcommits.org/).
 * Write a Good Commit Message:
   * When fixing a bug, explain what the bug was, how it occurred and how it was fixed.
