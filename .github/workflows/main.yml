@@ -10,8 +10,8 @@ on:
 
 jobs:
   build:
-    # Use Windows 2019 specifically to get VS2019, which allows downloading pre-built binaries from conan center, rather than rebuilding them in CI.
-    runs-on: windows-2019
+    # Use Windows 2022 specifically to get VS2022, which allows downloading pre-built binaries from conan center, rather than rebuilding them in CI.
+    runs-on: windows-2022
     strategy:
       matrix:
         build_type: ['Debug','Release']
@@ -27,7 +27,7 @@ jobs:
         run: echo "Using Conan ${{ steps.conan.outputs.version }}"
 
       - name: Create default Conan profile
-        run: conan profile new default --detect
+        run: conan profile detect
 
       - name: Build project in ${{ matrix.build_type }} mode
-        run: conan create . -s build_type=${{ matrix.build_type }}
+        run: conan create . -s compiler.cppstd=17 -s "&:build_type=${{ matrix.build_type }}" -s build_type=Release --build=missing

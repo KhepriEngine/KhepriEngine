@@ -1,5 +1,6 @@
-from conans import ConanFile, tools
+from conan import ConanFile, tools
 from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain
+from conan.tools.scm import Git
 import re
 
 class KhepriEngineConan(ConanFile):
@@ -10,7 +11,7 @@ class KhepriEngineConan(ConanFile):
     description = "A general-purpose modular game engine for C++"
 
     def set_version(self):
-        git = tools.Git(folder=self.recipe_folder)
+        git = Git(self)
 
         self.version = "0.0.0"
         try:
@@ -24,7 +25,7 @@ class KhepriEngineConan(ConanFile):
 
         try:
             # Store the short Git version because Conan has a limit of the length of the version string
-            self.version += "+{}".format(git.get_revision()[:GIT_SHORT_HASH_LENGH])
+            self.version += "+{}".format(git.get_commit()[:GIT_SHORT_HASH_LENGH])
             if not git.is_pristine():
                 self.version += ".dirty"
         except Exception:
@@ -36,19 +37,17 @@ class KhepriEngineConan(ConanFile):
 
     generators = "CMakeDeps"
 
-    requires = [
-        ("assimp/[>=5.0 <6.0]"),
-        ("cxxopts/[>=2.0 <3.0]"),
-        ("diligent-core/2.5.1"),
-        ("fmt/9.0.0"),
-        ("freetype/[>=2.0 <3.0]"),
-        ("glfw/[>=3.0 <4.0]"),
-        ("gsl-lite/0.36.0"),
-    ]
+    def requirements(self):
+        self.requires("assimp/[>=5.0 <6.0]")
+        self.requires("cxxopts/[>=2.0 <3.0]")
+        self.requires("diligent-core/2.5.1")
+        self.requires("fmt/9.0.0")
+        self.requires("freetype/[>=2.0 <3.0]")
+        self.requires("glfw/[>=3.0 <4.0]")
+        self.requires("gsl-lite/0.36.0")
 
-    build_requires = [
-        ("gtest/[>=1.0 <2.0]"),
-    ]
+    def build_requirements(self):
+        self.test_requires("gtest/[>=1.0 <2.0]")
 
     exports_sources = "CMakeLists.txt", "cmake/*", "include/*", "src/*", "tests/*", "tools/*"
 
