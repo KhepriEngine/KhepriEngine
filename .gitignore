@@ -1,6 +1,7 @@
 /.vscode
 /build
-/test_package/build
 /CMakeUserPresets.json
+/test_package/build
+/test_package/CMakeUserPresets.json
 /cmake-build-*
 /graph_info.json
