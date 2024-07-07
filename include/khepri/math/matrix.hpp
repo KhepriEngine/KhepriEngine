@@ -238,6 +238,7 @@ public:
             m(i, 1) *= scale[i];
             m(i, 2) *= scale[i];
         }
+        return m;
     }
 
     /// Constructs a rotation transformation from the specified quaternion

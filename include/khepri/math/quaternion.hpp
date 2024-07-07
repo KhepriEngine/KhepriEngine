@@ -212,9 +212,9 @@ public:
      */
     static BasicQuaternion from_euler(ComponentType x, ComponentType y, ComponentType z) noexcept
     {
-        const auto c1 = std::cos(-rx / 2), s1 = std::sin(-rx / 2);
-        const auto c2 = std::cos(-ry / 2), s2 = std::sin(-ry / 2);
-        const auto c3 = std::cos(-rz / 2), s3 = std::sin(-rz / 2);
+        const auto c1 = std::cos(-x / 2), s1 = std::sin(-x / 2);
+        const auto c2 = std::cos(-y / 2), s2 = std::sin(-y / 2);
+        const auto c3 = std::cos(-z / 2), s3 = std::sin(-z / 2);
         return {s1 * c2 * c3 + c1 * s2 * s3, c1 * s2 * c3 - s1 * c2 * s3,
                 c1 * c2 * s3 + s1 * s2 * c3, c1 * c2 * c3 - s1 * s2 * s3};
     }
