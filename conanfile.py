@@ -39,7 +39,7 @@ class KhepriEngineConan(ConanFile):
 
     def requirements(self):
         # Public dependencies
-        self.requires("fmt/9.0.0", transitive_headers=True)
+        self.requires("fmt/10.1.0", transitive_headers=True)
         self.requires("gsl-lite/0.36.0", transitive_headers=True)
         # Private dependencies
         self.requires("assimp/[>=5.0 <6.0]")
