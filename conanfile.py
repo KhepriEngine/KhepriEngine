@@ -11,7 +11,7 @@ class KhepriEngineConan(ConanFile):
     description = "A general-purpose modular game engine for C++"
 
     def set_version(self):
-        git = Git(self)
+        git = Git(self, self.recipe_folder)
 
         self.version = "0.0.0"
         try:
